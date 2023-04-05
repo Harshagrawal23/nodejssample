@@ -1,0 +1,517 @@
+<html>
+   <head>
+      <script>
+         var subscriptionId = "<%= subscriptionId %>";
+         var amountPaid = "<%= amountPaid %>";
+         var planDescription = "<%= planDescription %>";
+         var members = "<%= members %>";
+         members = members.split(",");
+
+         function onPageLoad() {
+            amountPaid = amountPaid*1.0/100;
+            
+            var planComp = document.getElementsByClassName("plan-name");
+            for(var i=0;i<planComp.length;i++) {
+               planComp[i].textContent = planDescription;
+            }
+
+            var confirmationIdComp = document.getElementsByClassName("confirmationId");
+            for(var i=0;i<confirmationIdComp.length;i++) {
+               confirmationIdComp[i].textContent = subscriptionId;
+            }
+
+            var periodUnitAbbr = findPeriodUnitAbbr();
+            var amountPaidComp = document.getElementsByClassName("amount-paid");
+         
+            amountPaid = "$" + amountPaid + "/" + periodUnitAbbr;
+            for(var i=0;i<amountPaidComp.length;i++) {
+               amountPaidComp[i].textContent = amountPaid;
+            } 
+
+            displayMember();
+         }
+
+         function displayMember() {
+            var memberComp = document.getElementsByClassName("member-list");
+
+            for(var i=0;i<memberComp.length;i++) {
+               var parentComp = memberComp[i];
+ 
+               for(var j=0;j<members.length;j++) {
+                  var childNode = document.createElement("li");
+                  childNode.textContent = members[j];
+                  parentComp.appendChild(childNode);
+               }
+
+            }
+
+         }
+
+         function findPeriodUnitAbbr() {
+            var period = "<%= billingPeriod %>";
+            var periodUnit = "<%= billingPeriodUnit %>";
+            var periodUnitAbbr;
+
+            if(periodUnit==="month")
+               periodUnitAbbr = "mo";
+            else if(periodUnit==="year")
+               periodUnitAbbr = "yr";
+            if(period>1)
+               periodUnitAbbr = period + periodUnitAbbr;
+
+            return periodUnitAbbr;
+         }
+
+         window.onload = onPageLoad;
+      </script>
+ 
+      <meta charset="utf-8" />
+      <meta
+         name="viewport"
+         content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"
+         />
+         <style>
+            /* Extra small device */
+            @media only screen and (max-width: 375px) {  
+   
+               .contact-no-mobile{
+                  display: block;
+               }
+
+               .contact-no-desktop{
+                  display: none;;
+               }
+               
+            }
+   
+            /* small device */
+            @media only screen and (max-width: 600px) { 
+   
+               .contact-no-mobile{
+                  display: block;
+               }
+
+               .contact-no-desktop{
+                  display: none;;
+               }
+   
+               }
+   
+               /* Tablet */
+            @media only screen and (min-width: 600px) { 
+   
+               .contact-no-mobile{
+                  display: none;
+               }
+
+               .contact-no-desktop{
+                  display: block;
+                  left: 300px;
+               }
+   
+               }
+   
+                 /* Tablet Landscape */
+            @media only screen and (min-width: 768px) { 
+   
+               .contact-no-mobile{
+                  display: none;
+               }
+
+               .contact-no-desktop{
+                  display: block;
+                  left: 300px;
+               }
+   
+                 }
+   
+               /* desktop */
+          @media only screen and (min-width: 992px) { 
+   
+            .contact-no-mobile{
+                  display: none;
+               }
+
+               .contact-no-desktop{
+                  display: block;
+                  left: 50vw;
+               }
+   
+         }  
+         </style>
+      <style type="text/css">
+         svg:not(:root).svg-inline--fa {
+         overflow: visible;
+         }
+         .svg-inline--fa {
+         display: inline-block;
+         font-size: inherit;
+         height: 1em;
+         overflow: visible;
+         vertical-align: -0.125em;
+         }
+
+ 
+   
+ 
+ 
+      </style>
+      <link
+         rel="shortcut icon"
+         type="image/x-ico"
+         href="https://www.1dental.com/favicon.ico"
+         />
+ 
+      <link href="https://www.1dental.com/join/" rel="canonical" />
+      <meta
+         name="description"
+         content="Save 20-60% on dental care with an affordable discount dental plan. From only $9.95/mo. Trusted by 9 million members. Join in minutes and use immediately!"
+         />
+      <title>
+         Discount Dental Plans - 1Dental.com | Join and Use Immediately
+      </title>
+      <link
+         rel="stylesheet"
+         href="https://qualbe-cdn.azureedge.net/dental-enroll/Test/1288/dist/vendor.css"
+         />
+      <link
+         rel="stylesheet"
+         href="https://qualbe-cdn.azureedge.net/dental-enroll/Test/1288/dist/style.css"
+         />
+   </head>
+   <body>
+      <!-- Google Tag Manager -->
+      <!-- End Google Tag Manager -->
+      <div id="app">
+         <div data-v-24d10a5b="" data-v-2e9eab10="" class="bg-white" style="position: fixed;padding-top: 0em;width: 100%;overflow-y: hidden;">
+            <div data-v-24d10a5b="" class="container">
+               <div data-v-24d10a5b="" class="d-block">
+                  <nav data-v-24d10a5b="" >
+                     <a data-v-24d10a5b="" href="#" class="navbar-brand">
+                     <img data-v-24d10a5b="" src="./../images/1Dental-Logo.svg">
+                     </a>
+                     <div data-v-24d10a5b="" id="nav-collapse"  style="display: inline-block; ">
+                        <ul data-v-24d10a5b="" class="ml-auto mb-0 contact-no-desktop" style="float: right;position: relative; top: 1vh;">
+                           <a data-v-24d10a5b="" href="tel:855-588-8727" class="bold text-decoration-none" style="color: #0170D0;">
+                              Call us at 855-588-8727
+                           </a>
+                        </ul>
+                        <ul data-v-24d10a5b="" class="ml-auto mb-0 contact-no-mobile" style="float: right;position: absolute;top:1vh; right: 17px;">
+                           <a data-v-24d10a5b="" href="tel:855-588-8727" class="bold text-decoration-none" style="color: #0170D0">
+                              855-588-8727
+                           </a>
+                        </ul>
+                     </div>
+                  </nav>
+               </div>
+            </div>
+         </div>
+         
+         <div data-v-107bf75c="" data-v-79db8364="" class="bg-gray container-fluid pl-0 pr-0" style="height: 100%;padding-top:50px;width: 100%;">
+            <div data-v-107bf75c="" class="thanku-gettempid-page" style="height: 100%;overflow-y: auto;">
+                  <div data-v-107bf75c="" class="d-md-block d-none" style="height: 100%;">
+                     <div data-v-107bf75c="" class="gettempid-lg-banner" style="height: 100%;">
+                        <div data-v-107bf75c="" class="bannertext" style="height: 100%;">
+                           <div data-v-107bf75c="" class="container" style="height: 100%;">
+                              <div data-v-107bf75c="" class="row align-items-center" >
+                                    
+                                 <div data-v-107bf75c="" class="col-xl-4 col-lg-5 col-md-6" >
+                                    
+                                    <div data-v-107bf75c="" class="detail-top-box" style="margin-top: -200;width: 120%;" >
+                                       <div data-v-107bf75c="" class="row text-center">
+                                          <div data-v-107bf75c="" class="col-md-12">
+                                             <h4 data-v-107bf75c="" class="text-center mb-3 font-weight-normal plan-name">
+                                                Plan:
+                                                <span data-v-107bf75c="" class="font-weight-bold "></span>
+                                             </h4>
+                                          </div>
+                                       </div>
+                                       <hr data-v-477059e2="" class="mt-2 text-primary">
+                                       <div data-v-107bf75c="" class="row text-left">
+                                          <div data-v-107bf75c="" class="col-md-5">
+                                             <h5 data-v-107bf75c="" class="font-16">
+                                                <span data-v-107bf75c="" class="font-weight-normal">Confirmation #: </span>  
+                                             </h5>
+                                          </div>
+                                          <div data-v-107bf75c="" class="col-md-7">
+                                             <h5>
+                                                <span id="confirmationId" data-v-107bf75c="" class="text-uppercase font-16 font-weight-normal confirmationId"></span>
+                                             </h5>
+                                          </div>
+                                       </div>
+                                       <div data-v-107bf75c="" class="row text-center pt-3">
+                                          <div data-v-107bf75c="" class="col-md-5 text-left">
+                                             <h5 data-v-107bf75c="" class="font-16 mb-0 font-weight-normal">Members:</h5>
+                                          </div>
+                                          <div data-v-107bf75c="" class="col-md-7 text-left">
+                                             <p data-v-107bf75c="" class="mb-0">
+                                             <ul data-v-107bf75c="" class="m-0 list-unstyled font-16 font-weight-normal member-list">
+                                             </ul>
+                                             </p> 
+                                             <p data-v-107bf75c=""></p>
+                                          </div>
+                                       </div>
+                                       <hr data-v-477059e2="" class="mt-2">
+                                       <div data-v-107bf75c="" class="row text-center pt-3">
+                                          <div data-v-107bf75c="" class="col-md-12">
+                                             <h5 data-v-107bf75c="" class="font-weight-normal font-18 ">
+                                                Amount Paid Today:
+                                                <span data-v-107bf75c="" class="font-weight-normal amount-paid"></span>
+                                             </h5>
+                                          </div>
+                                       </div>
+               
+                                    </div>
+                                    <div data-v-107bf75c="" class="row mt-4 text-center" style="width: 120%;">
+                                       <div data-v-107bf75c="" class="col-md-12">
+                                          <h4 data-v-107bf75c="">Download the 1Dental App</h4>
+                                          <p data-v-107bf75c="">Get everything you need to use your dental plan.</p>
+                                       </div>
+                                    </div>
+                                    <div data-v-107bf75c="" class="row text-center" style="width: 120%;">
+                                       <div data-v-107bf75c="" class="col-md-6"><a data-v-107bf75c="" href="https://apps.apple.com/us/app/1dental/id1456123889" target="_blank"><img data-v-107bf75c="" src="https://digc4xe6kfaun.cloudfront.net/images/new-enroll/Group 481.svg" class="img-fluid"></a></div>
+                                       <div data-v-107bf75c="" class="col-md-6"><a data-v-107bf75c="" href="https://play.google.com/store/apps/details?id=com.qualbe1dapp.android&amp;hl=en_US" target="_blank"><img data-v-107bf75c="" src="https://digc4xe6kfaun.cloudfront.net/images/new-enroll/Group 482.svg" class="img-fluid"></a></div>
+                                    </div>
+                                 </div>
+                                 <div data-v-107bf75c="" class="offset-xl-1 col-xl-7 col-lg-7 col-md-6">
+                                    <div data-v-107bf75c="" class="row">
+                                       <div data-v-107bf75c="" class="col-md-12">
+                                          <div data-v-107bf75c="" class="py-4">
+                                             <h2 data-v-107bf75c="" class="mb-3"> Thank you for joining 1Dental!</h2>
+                                             <div data-v-107bf75c="">
+                                                <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> Your plan is active and can be used right away. Your Member Id will be in your welcome email momentarily.</p>
+                                             </div>
+                                          </div>
+                                          <!---->
+                                       </div>
+                                    </div>
+                                    <hr data-v-2e9eab10="" class="mt-2">
+                                    <div data-v-107bf75c="" class="row">
+                                       <div data-v-107bf75c="" class="col-md-12">
+                                          <div data-v-107bf75c="" class="">
+                                             <h2>How to Get Started</h2>
+                                          </div>
+                                          <!---->
+                                       </div>
+                                    </div>
+                                    <div data-v-107bf75c="" class="row">
+                                       <div data-v-107bf75c="" class="col-md-12">
+                                          <div data-v-107bf75c="" class="py-4">
+                                             <h4>Find A Dentist</h4>
+                                             <div data-v-107bf75c="">
+                                                <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> 
+                                                   Use our 
+                                                   <span data-v-107bf75c="" class="pb-3 text-de"><a data-v-107bf75c=""  href="https://www.1dental.com/dentists/" target="_blank" class="text-decoration-none">dentist search</a></span>
+                                                   to access savings at a dentist near you! Pay the in-network discounted rate at time of service.
+                                                </p>
+                                             </div>
+                                          </div>
+                                          <!---->
+                                       </div>
+                                    </div>
+                                    <div data-v-107bf75c="" class="row">
+                                       <div data-v-107bf75c="" class="col-md-12">
+                                          <div data-v-107bf75c="" class="py-4">
+                                             <h4>Make Your Appointment</a></h4>
+                                             <div data-v-107bf75c="">
+                                                <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> 
+                                                   Inform your dentist you're using the
+                                                   <b data-v-107bf75c="">“<span class="plan-name"></span>”</b>
+                                                   — not “the 1Dental plan.”
+                                                </p>
+                                             </div>
+                                          </div>
+                                          <!---->
+                                       </div>
+                                    </div>
+                                    <div data-v-107bf75c="" class="row">
+                                       <div data-v-107bf75c="" class="col-md-12">
+                                          <div data-v-107bf75c="" class="py-4">
+                                             <h4>Save on Procedures Today</a></h4>
+                                             <div data-v-107bf75c="">
+                                                <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> 
+                                                   Tell your dentist your plan name and Member ID and save today! Your member card will arrive in the mail in about a week.
+                                                </p>
+                                             </div>
+                                          </div>
+                                          <!---->
+                                       </div>
+                                    </div>
+                                    <hr data-v-2e9eab10="" class="mt-2">
+                                    <div data-v-107bf75c="" class="row">
+                                       <div data-v-107bf75c="" class="col-md-12">
+                                          <div data-v-107bf75c="" class="py-4">
+                                             <h4>Still have questions?</a></h4>
+                                             <div data-v-107bf75c="">
+                                                <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> 
+                                                   We're here to help! Check out 
+                                                   <a data-v-107bf75c="" href="https://my.1dental.com/" class=" text-decoration-none" target="_blank">My1Dental.com</a> now or give us a call at <a data-v-107bf75c="" href="tel:855-329-6305" class="text-decoration-none">855-329-6305</a>
+                                                </p>
+                                             </div>
+                                          </div>
+                                          <!---->
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  <div data-v-107bf75c="" class="d-md-none d-block">
+                     <div data-v-107bf75c="" class="gettempid-sm-banner">
+                        <div data-v-107bf75c="" class="bannertext p-1">
+                           <div data-v-107bf75c="" class="container">
+                              <div data-v-107bf75c="" class="row">
+                                 <div data-v-107bf75c="" class="col-md-12 text-left">
+                                    <h1 data-v-107bf75c="" class="mt-4"> Thank you for joining 1Dental!</h1>
+                                    <div data-v-107bf75c="">
+                                       <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> Your plan is active and can be used right away. Your Member Id will be in your welcome email momentarily.</p>
+                                    </div>
+                                    <div data-v-107bf75c="" class="text-center">
+                                       <!---->
+                                    </div>
+                                 </div>
+                                 <div data-v-107bf75c="" class="row">
+                                 <div data-v-107bf75c="" class="col-md-12 text-center">
+                                    <div data-v-107bf75c="" class="detail-top-box mb-5" >
+                                       <div data-v-107bf75c="" class="row text-center">
+                                          <div data-v-107bf75c="" class="col-12">
+                                             <h4 data-v-107bf75c="" class="font-weight-normal plan-name">
+                                                Plan:
+                                                <span data-v-107bf75c="" class="font-weight-bold  "></span>
+                                             </h4>
+                                             <div data-v-107bf75c="" class="col-md-6 pl-2 pr-0 text-left w-60pt">
+                                                <p data-v-107bf75c=""></p>
+                                             </div>
+                                          </div>
+                                       </div>
+                                       <hr data-v-477059e2="" class="mt-2">
+                                       <div data-v-107bf75c="" class="row">
+                                          <div data-v-107bf75c="" class="col-5 text-left">
+                                             <h5 data-v-107bf75c="" class="mb-0 font-18"><span data-v-107bf75c="" class="font-weight-normal">Confirmation #: </span></h5>
+                                          </div>
+                                          <div data-v-107bf75c="" class="col-7 text-left">
+                                             <h5 data-v-107bf75c="" class="mb-0 font-18 confirmationId"><span data-v-107bf75c="" class="textuppercase font-weight-bold"></span></h5>
+                                          </div>
+                                       </div>
+                                       <div data-v-107bf75c="" class="row text-left pt-3">
+                                          <div data-v-107bf75c="" class="col-5 text-left">
+                                             <h5 data-v-107bf75c="" class="font-weight-normal font-18">Members:</h5>
+                                             <p data-v-107bf75c="" class="mb-0">
+                                             </p>
+                                             <p data-v-107bf75c=""></p>
+                                          </div>
+                                          <div data-v-107bf75c="" class="col-7 text-left">
+                                             <p data-v-107bf75c="" class="mb-0">
+                                             <ul data-v-107bf75c="" class="font-weight-normal font-16 list-unstyled m-0 member-list">
+                                             </ul>
+                                             </p> 
+                                             <p data-v-107bf75c=""></p>
+                                          </div>
+                                       </div>
+                                       <hr data-v-477059e2="" class="mt-2">
+                                       <div data-v-107bf75c="" class="row text-center pt-3">
+                                          <div data-v-107bf75c="" class="col-12">
+                                             <h5 data-v-107bf75c="" class="font-weight-normal font-18">
+                                                Amount Paid Today:
+                                                <span data-v-107bf75c="" class="font-weight-normal amount-paid"></span>
+                                             </h5>
+                                          </div>
+                                       </div>
+                                       
+                                    </div>
+                                    <hr data-v-2e9eab10="" class="mt-2">
+                                    <div data-v-107bf75c="" class="container">
+                                       <div data-v-107bf75c="" class="row text-left">
+                                          <div data-v-107bf75c="" class="row">
+                                             <div data-v-107bf75c="" class="col-md-12">
+                                                <div data-v-107bf75c="" class="">
+                                                   <h2>How to Get Started</h2>
+                                                </div>
+                                                <!---->
+                                             </div>
+                                          </div>
+                                          <div data-v-107bf75c="" class="row">
+                                             <div data-v-107bf75c="" class="col-md-12">
+                                                <div data-v-107bf75c="" class="py-4">
+                                                   <h4>Find A Dentist</h4>
+                                                   <div data-v-107bf75c="">
+                                                      <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> 
+                                                         Use our 
+                                                         <span data-v-107bf75c="" class="pb-3 text-de"><a data-v-107bf75c=""  href="https://www.1dental.com/dentists/" target="_blank" class="text-decoration-none">dentist search</a></span>
+                                                         to access savings at a dentist near you! Pay the in-network discounted rate at time of service.
+                                                      </p>
+                                                   </div>
+                                                </div>
+                                                <!---->
+                                             </div>
+                                          </div>
+                                          <div data-v-107bf75c="" class="row">
+                                             <div data-v-107bf75c="" class="col-md-12">
+                                                <div data-v-107bf75c="" class="py-4">
+                                                   <h4>Make Your Appointment</a></h4>
+                                                   <div data-v-107bf75c="">
+                                                      <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> 
+                                                         Inform your dentist you're using the
+                                                         <b data-v-107bf75c="">“<span class="plan-name"></span>”</b>
+                                                         — not “the 1Dental plan.”
+                                                      </p>
+                                                   </div>
+                                                </div>
+                                                <!---->
+                                             </div>
+                                          </div>
+                                          <div data-v-107bf75c="" class="row">
+                                             <div data-v-107bf75c="" class="col-md-12">
+                                                <div data-v-107bf75c="" class="py-4">
+                                                   <h4>Save on Procedures Today</a></h4>
+                                                   <div data-v-107bf75c="">
+                                                      <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> 
+                                                         Tell your dentist your plan name and Member ID and save today! Your member card will arrive in the mail in about a week.
+                                                      </p>
+                                                   </div>
+                                                </div>
+                                                <!---->
+                                             </div>
+                                          </div>
+                                          <hr data-v-2e9eab10="" class="mt-2">
+                                          <div data-v-107bf75c="" class="row">
+                                             <div data-v-107bf75c="" class="col-md-12">
+                                                <div data-v-107bf75c="" class="py-4">
+                                                   <h4>Still have questions?</a></h4>
+                                                   <div data-v-107bf75c="">
+                                                      <p data-v-107bf75c="" class="pr-lg-4 mb-0 pb-0"> 
+                                                         We're here to help! Check out 
+                                                         <a data-v-107bf75c="" href="https://my.1dental.com/" class=" text-decoration-none">My1Dental.com</a> now or give us a call at <a data-v-107bf75c="" href="tel:855-329-6305" class="text-decoration-none">855-329-6305</a>
+                                                      </p>
+                                                   </div>
+                                                </div>
+                                                <!---->
+                                             </div>
+                                          </div>
+                                          <div data-v-107bf75c="" class="dual-plan-dialcare-mobile">
+                                             <div data-v-107bf75c="" class="text-center py-3">
+                                                <h4 data-v-107bf75c="">Download the App</h4>
+                                                <p data-v-107bf75c="">Get everything you need to use your dental plan.</p>
+                                             </div>
+                                             <div data-v-107bf75c="" class="row align-items-center justify-content-center">
+                                                <div data-v-107bf75c="" class="col-5"><a data-v-107bf75c="" href="https://apps.apple.com/us/app/1dental/id1456123889" target="_blank"><img data-v-107bf75c="" src="https://digc4xe6kfaun.cloudfront.net/images/new-enroll/Group 481.svg" class="img-fluid"></a></div>
+                                                <div data-v-107bf75c="" class="col-5"><a data-v-107bf75c="" href="https://play.google.com/store/apps/details?id=com.qualbe1dapp.android&amp;hl=en_US" target="_blank"><img data-v-107bf75c="" src="https://digc4xe6kfaun.cloudfront.net/images/new-enroll/Group 482.svg" class="img-fluid"></a></div>
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+        
+      </div>
+   </body>
+</html>

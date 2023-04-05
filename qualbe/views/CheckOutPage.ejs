@@ -1,0 +1,2193 @@
+<html>
+   <head>
+      <script src="custom.js"></script>
+      <script src="https://js.chargebee.com/v2/chargebee.js"></script> 
+      <script>
+         var itemPriceId = "<%= itemPriceId %>";
+         var itemId = "<%= itemId %>";
+         var siteName = "<%= siteName %>";
+         var isr = "<%= isr %>";
+         console.log(isr);
+         var fname, lname, email, phone, address1, address2, city, zipcd, state, baddress1, baddress2, bcity, bzipcd, bstate;
+         var country = "US", planPrice = "";
+         var itemPrice, additionalPrice = [], item;
+         var membersCount = 1;
+         var showCheckout = false;
+         var periodUnit, periodUnitAbbr, billingAddressSameAsMailing=true;
+         
+         
+         function validateFields(fieldName, fieldComponent, value, validateFieldValue=false ,validator, renderError){
+            removeValidationMessage(fieldComponent);
+             
+            if(fieldComponent.validity.rangeOverflow && fieldComponent.parentElement.children.length == 1 && (value == undefined || value == "")){
+               showRangeErrorValidationMessage(fieldComponent);
+               return;
+            }else if(fieldComponent.validity.valueMissing && fieldComponent.parentElement.children.length == 1 && (value == undefined || value == "")){
+                 showMissingErrorValidationMessage(fieldComponent);
+                 return;
+            }
+
+            if(validateFieldValue) {
+               if(!validator(value)) {
+                  renderError(fieldComponent, fieldName);
+               }
+            }
+         }
+
+         function showRangeErrorValidationMessage(fieldComponent) {
+            var divElement = document.createElement("div");
+            divElement.id = "fnrangeerror";
+            divElement.className = "required-error-";
+
+            var spanElement = document.createElement("span");
+            spanElement.className = "required-error";
+            spanElement.textContent =`The ${fieldName} is too large`;
+            divElement.appendChild(spanElement);
+
+            fieldComponent.parentElement.appendChild(divElement);
+         }
+
+         function showMissingErrorValidationMessage(fieldComponent) {
+            var divElement = document.createElement("div");
+            divElement.id = "missingerror";
+            divElement.className = "required-error-";
+
+            var spanElement = document.createElement("span");
+            spanElement.className = "required-error";
+            spanElement.textContent = "Please enter required information";
+            divElement.appendChild(spanElement);
+
+            fieldComponent.parentElement.appendChild(divElement);
+         }
+
+         
+         function showValidationMessage(fieldComponent){
+            removeValidationMessage(fieldComponent);
+             if(fieldComponent.parentElement.children.length == 1){
+              /*  var ele = document.createElement("div");
+                ele.className = "required-error-";
+                ele.innerHTML = '<span class="required-error">Cannot contain special characters.</span>';
+                ele.id = 'valerror';*/
+               var divElement = document.createElement("div");
+               divElement.id = "valerror";
+               divElement.className = "required-error-";
+
+               var spanElement = document.createElement("span");
+               spanElement.className = "required-error";
+               spanElement.textContent = "Cannot contain special characters.";
+               divElement.appendChild(spanElement);
+               fieldComponent.parentElement.appendChild(divElement);
+             }
+
+         }
+
+         function showInvalidFieldValueMessage(fieldComponent, fieldName) {
+            removeValidationMessage(fieldComponent);
+             if(fieldComponent.parentElement.children.length == 1){
+                /*var ele = document.createElement("div");
+                ele.className = "required-error-";
+                ele.innerHTML = '<span class="required-error">Must be a valid ' + fieldName + '</span>';
+                ele.id = 'valerror';*/
+               var divElement = document.createElement("div");
+               divElement.id = "valerror";
+               divElement.className = "required-error-";
+
+               var spanElement = document.createElement("span");
+               spanElement.className = "required-error";
+               spanElement.textContent = "Must be a valid " + fieldName;
+               divElement.appendChild(spanElement);
+               fieldComponent.parentElement.appendChild(divElement);
+             }            
+         }
+         
+         function removeValidationMessage(fieldComponent){
+             if(fieldComponent.parentElement.children.length > 1){
+                 var errdiv = fieldComponent.parentElement.lastElementChild;
+                 if(errdiv.id == 'valerror' || errdiv.id == 'missingerror'){
+                     fieldComponent.parentElement.removeChild(fieldComponent.parentElement.lastElementChild);
+                 }
+             }
+         }
+
+         function validateEmail(email){
+            return String(email)
+               .toLowerCase()
+               .match(
+                  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+               );
+         };
+
+         function validateName(name) {
+            var pattern = /^([a-zA-Z`'~\.\-]+)+$/;
+            return pattern.test(name);
+         }
+
+         function validateFullName(name) {
+            var pattern = /^([a-zA-Z`'~\.\-]+)+ ?([a-zA-Z`'~\.\-]+)+$/;
+            return pattern.test(name);
+         }
+
+         function validatePhone(phone) {
+          //  var pattern = /^([0-9-() ]){10}$/;
+            var pattern = /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/;
+            return pattern.test(phone);
+         }
+
+         function validateCity(city) {
+            var pattern = /^([a-zA-z\-\.' ])+$/;
+            return pattern.test(city);            
+         }
+
+         function validateZipCode(zipCode) {
+            var pattern = /^([0-9]){5}$/;
+            return pattern.test(zipCode);
+         }
+
+         
+         
+         function updateFirstName(e) {
+             if(fname===document.getElementById(e.id).value)
+                 return;
+             var fnamecomp = document.getElementById(e.id);
+             fname = fnamecomp.value;
+             validateFields('First name', fnamecomp, fname, true, validateName, showValidationMessage);
+             updatePrimaryMemberPrice();
+             isCheckoutPossible();
+         }
+
+         function updateLastName(e) {
+             if(lname===document.getElementById(e.id).value)
+                 return;
+             var lnamecomp = document.getElementById(e.id);
+             lname = lnamecomp.value;
+             validateFields('Last name', lnamecomp, lname, true, validateName, showValidationMessage );
+             updatePrimaryMemberPrice();
+             isCheckoutPossible();
+         }
+         
+         function updateEmail(e) {
+             if(email===document.getElementById(e.id).value)
+                 return;
+             var emailcomp = document.getElementById(e.id);
+             email = emailcomp.value;
+             validateFields('Email', emailcomp, email, true ,validateEmail, showInvalidFieldValueMessage );
+             updateCheckout();
+             isCheckoutPossible();
+         }
+         
+         function updatePhone(e) {
+            if(phone===document.getElementById(e.id).value)
+               return;
+            var phonecomp = document.getElementById(e.id);
+            phone = phonecomp.value;
+            validateFields('phone number', phonecomp, phone, true, validatePhone, showInvalidFieldValueMessage);
+            if(phone!=undefined && phone!="") {
+            fetchCustomerByPhone(phone).then(flag => {
+               if(flag==true) {
+                  $('#myModal1').modal('toggle')
+               }
+            })
+            }
+            isCheckoutPossible();
+         }
+         function updateAddress1(e) {
+             if(address1===document.getElementById(e.id).value)
+                 return;
+             var address1comp = document.getElementById(e.id);
+             address1 = address1comp.value;
+             validateFields('Address', address1comp, address1, false);
+             updateBillingAddressText();
+             isCheckoutPossible();
+         }
+         function updateAddress2(e) {
+             if(address2===document.getElementById(e.id).value)
+                 return;
+             address2 = document.getElementById(e.id).value;
+             updateBillingAddressText();
+         }
+         function updateCity(e) {
+             if(city===document.getElementById(e.id).value)
+                 return;
+             var citycomp = document.getElementById(e.id);
+             city = citycomp.value.trim();
+             validateFields('city', citycomp, city, true, validateCity, showInvalidFieldValueMessage);
+             updateBillingAddressText();
+             isCheckoutPossible();
+         }
+         function updateZipCode(e) {
+             if(zipcd===document.getElementById(e.id).value)
+                 return;
+             var zipcdcomp = document.getElementById(e.id);
+             zipcd = zipcdcomp.value;
+             validateFields('zip code', zipcdcomp, zipcd, true, validateZipCode, showInvalidFieldValueMessage );
+             updateBillingAddressText();
+             isCheckoutPossible();
+         }
+         function updateState(e) {
+             selectElement = document.querySelector('#state');
+             output = selectElement.value;
+             state = output;
+             var statecomp = document.getElementById("state");
+             console.log(state=="");
+             validateFields('state', statecomp, state);
+             updateBillingAddressText();
+             isCheckoutPossible();
+         }   
+         
+         function copyBillingAddress(){
+            var cbBillingAddress = document.getElementById("samebilingaddresscheckbox");
+            var cbBillingAddressText = document.getElementById("billing-address-full");
+            billingAddressSameAsMailing = cbBillingAddress.checked;
+            if(cbBillingAddress.checked == true){
+                document.getElementById("billingAddress").style.display = "none";
+                cbBillingAddressText.style.display = "block";
+                updateBillingAddressText();
+            }else{
+                document.getElementById("billingAddress").style.display = "block"
+                cbBillingAddressText.style.display = "none";
+            }
+
+            isCheckoutPossible();
+         }
+
+         function updateBillingAddressText() {
+            var cbBillingAddressText = document.getElementById("billing-address-full");
+            cbBillingAddressText.textContent = getShippingAddress();
+         }
+
+         function getShippingAddress() {
+            var shippingAddress = "";
+            shippingAddress = appendString(shippingAddress, address1);
+            shippingAddress = appendString(shippingAddress, address2);
+            shippingAddress = appendString(shippingAddress, city);
+            shippingAddress = appendString(shippingAddress, state);
+            shippingAddress = appendString(shippingAddress, zipcd, "");
+            return shippingAddress.trim();
+         }
+
+         function appendString(str1, str2, delimeter = ",") {
+            if(str1==null && str2==null)
+               return "";
+            else if(str1==null || str1=="")
+               return str2;
+            else if(str2==null || str2=="")
+               return str1;
+            else if(str1!=="" && str2!=="")
+               return str1 + `${delimeter} ` + str2;
+            else
+               return "";
+         }
+         
+         function updateBillingAddress1(e){
+         var baddress1comp = document.getElementById(e.id);
+         baddress1 = baddress1comp.value;
+         validateFields('Address', baddress1comp, baddress1, false);
+         isCheckoutPossible();
+         }
+         
+         function updateBillingAddress2(e){
+         baddress2 = baddress2comp.value;
+         }
+         
+         function updateBillingCity(e){
+         var bcitycomp = document.getElementById(e.id);
+         bcity = bcitycomp.value;
+         validateFields('city', bcitycomp, bcity, true, validateCity, showInvalidFieldValueMessage);
+         isCheckoutPossible();
+         }
+         
+         function updateBillingZipCode(e){
+         var bzipcdcomp = document.getElementById(e.id);
+         bzipcd = bzipcdcomp.value;
+         validateFields('zip code', bzipcdcomp, bzipcd, true, validateZipCode, showInvalidFieldValueMessage );
+         isCheckoutPossible();
+         }
+         
+         function updateBillingState(e){
+         selectElement = document.querySelector('#Billingstate');
+         output = selectElement.value;
+         bstate = output;
+         var bstatecomp = document.getElementById("Billingstate");
+         validateFields('state', bstatecomp, bstate);
+         isCheckoutPossible();
+         }
+         
+         function updateDependentLastName(e) {
+             var lnamecomp = document.getElementById(e.id);
+             validateFields('Last name', lnamecomp, lnamecomp.value, true, validateName, showValidationMessage);
+             displayMember();
+         }
+         
+         function updateDependentFirstName(e) {
+             var fnamecomp = document.getElementById(e.id);
+             validateFields('First name', fnamecomp, fnamecomp.value, true, validateName, showValidationMessage);
+             displayMember();
+         }
+
+         function updateDependentFirstAndLastName(e) {
+             var fnamecomp = document.getElementById(e.id);
+             validateFields('First name', fnamecomp, fnamecomp.value, true, validateFullName, showValidationMessage);
+             displayMember1();
+         }
+         
+         function nameValidation(e) {
+         var k = e.keyCode;
+         return true;
+         // return ((k > 64 && k < 91) || (k >= 96 && k < 123) || k == 8  || k == 126 || k == 45 || k == 39 || k == 46);
+         }
+         
+         function mailingAddressValidation(e) {
+         var k = e.keyCode;
+         return ((k > 64 && k < 91) || (k > 96 && k < 123) || k == 8  || (k >= 32 && k <= 57) || k == 92 );
+         }
+         
+         function cityValidation(e) {
+         var k = e.keyCode;
+         return true;
+         // return ((k > 64 && k < 91) || (k > 96 && k < 123) || k == 8  || k == 45 || k == 46 || k == 39 || k == 32);
+         }
+         
+         function stateValidation(e) {
+         var k = e.keyCode;
+         return ((k > 64 && k < 91) || (k > 96 && k < 123) || k == 8 );
+         }
+         
+         function emailValidation(e) {
+         var k = e.keyCode;
+         return ((k > 64 && k < 91) || (k > 96 && k < 123) || k == 8  || (k >= 33 && k <= 57) || k == 64 || k == 95);
+         }
+
+         function phoneValidation(e) {
+         var k = e.keyCode;
+         return ((k>=48 && k<=57) || k== 32|| k == 40 || k == 41 || k == 43 || k == 45)
+         
+         }
+         
+      </script>
+      <script>
+         async function fetchEstimate() {
+             membersCount = getMembersCount();
+             let total = await fetchEstimateForNewSubscription(itemPriceId,  membersCount, email, address1, city, zipcd, "US");
+             total = total*1.0/100;
+             const estimateText = document.getElementById("estimate");
+             estimateText.textContent = `$${total}/${periodUnitAbbr}`;
+             document.getElementById("estimate1").textContent =  `$${total}/${periodUnitAbbr}`;
+             const estimateSupComp = document.getElementsByClassName("estimate-amount-sup");
+
+             for(var i=0;i<estimateSupComp.length;i++) {
+                estimateSupComp[i].textContent =  `${total}/${periodUnitAbbr}`;
+             }
+         }
+         
+         async function updateCheckout(display=false) {
+             membersCount = getMembersCount();
+             if(email!=undefined && email!="") {
+               createCheckoutForNewSubscription(itemPriceId, membersCount, fname, lname , email, phone , address1, address2, city, zipcd, state, "US", billingAddressSameAsMailing? address1 : baddress1 , billingAddressSameAsMailing? address2 : baddress2, billingAddressSameAsMailing? city : bcity, billingAddressSameAsMailing? zipcd : bzipcd, billingAddressSameAsMailing? state : bstate, getDependentMember(), isr )
+               .then(hosted_page => {
+                  document.getElementById("checkoutIframe").src = hosted_page.url;
+                  document.getElementById("checkoutIframe").style.display = "none";
+
+                  var delayInMilliseconds = 10000; //1 second
+
+                  setTimeout(function() {
+                     document.getElementById("checkoutIframe").style.display = "block";
+                  }, delayInMilliseconds);
+
+
+               }) .catch( err => {
+                  console.log(err);
+               } )
+            }
+         }
+         
+         async function openCheckoutPopup() {
+             if(isCheckoutPossible()) {
+                 membersCount = getMembersCount();
+                 createCheckoutPopup(siteName, itemPriceId, membersCount, fname, lname , email, phone , address1, address2, city, zipcd, state, "US", billingAddressSameAsMailing? address1 : baddress1 , billingAddressSameAsMailing? address2 : baddress2, billingAddressSameAsMailing? city : bcity, billingAddressSameAsMailing? zipcd : bzipcd, billingAddressSameAsMailing? state : bstate, getDependentMember(), isr )
+                 .then(hosted_page => {
+                 }) .catch( err => {
+                     console.log(err);
+                 } )
+             }
+         }
+         
+         
+         function isCheckoutPossible() {  
+            var button = document.getElementById("checkout-button");
+            var flag = itemPriceId && fname && lname && email && phone && address1 && city && zipcd && state && ( billingAddressSameAsMailing || (baddress1 && bcity && bzipcd && bstate) ) && (counter===getMembersCount()-1);
+
+            if(flag) {
+
+               flag = validateName(fname) && validateName(lname) && validateEmail(email) && validatePhone(phone) && validateCity(city) && validateZipCode(zipcd);
+ 
+               if(!billingAddressSameAsMailing) {
+                  flag = flag && validateCity(bcity) && validateZipCode(zipcd);
+               }
+
+               flag = flag && validateDependentMember();
+            }
+
+            button.disabled = !flag;
+         
+            button.style.backgroundColor = flag? "#6FB231" : "#A3A3A3";
+            return flag;
+         }
+         
+         function checkForFullDependentName() {
+         
+            for(var i=0;i<memberId.length;i++) {
+         
+               var fn = document.getElementById("fn" + index[i]).getElementsByTagName("input")[0].value.trim();
+               var ln = document.getElementById("ln" + index[i]).getElementsByTagName("input")[0].value.trim();
+            
+               if(fn==="" || ln==="") {
+                  return false;
+               }
+            }
+         
+             return true;
+         }
+         
+         async function displayCheckout() {
+             showCheckout = true;
+             updateCheckout(true);
+         }
+         
+         
+         function findPeriodUnit() {
+             periodUnit = itemPrice.item_price.period_unit;
+             if(periodUnit==="month")
+                 periodUnitAbbr = "mo";
+             else if(periodUnit==="year")
+                 periodUnitAbbr = "yr";
+             if(itemPrice.item_price.period>1)
+                 periodUnitAbbr = itemPrice.item_price.period + periodUnitAbbr;
+         }
+         
+         async function onPageLoad() {
+             //item = await fetchItem(itemId);
+             itemPrice = await fetchItemPrice(itemPriceId); 
+             findPeriodUnit();
+             fetchEstimate();
+             initializeStateDropDown();
+             var planNameComp = document.getElementsByClassName("plan-name");
+             for(var i=0;i<planNameComp.length;i++)
+                 planNameComp[i].textContent = itemPrice.item_price.external_name;
+             
+             updatePrimaryMemberPrice();
+             fetchItem(itemId).then(res => {
+                item = res;
+                createCheckoutSummary();
+             })
+             calculateAdditionalAmountForNewMember();
+             updateAdditionalPrice(1);
+         }
+
+         async function initializeStateDropDown() {
+            let states = await fetchAllState();
+            states = states.state;
+
+            let billingStateComp = document.getElementById("Billingstate");
+            let stateComp = document.getElementById("state");
+
+            for(var i=0;i<states.length;i++) {
+
+               let optionComp = document.createElement("option");
+               optionComp.textContent = states[i].value;
+               optionComp.value = states[i].value;
+
+               let optionComp1 = document.createElement("option");
+               optionComp1.textContent = states[i].value;
+               optionComp1.value = states[i].value;
+
+               stateComp.appendChild(optionComp);
+               billingStateComp.appendChild(optionComp1);
+
+            }
+            
+         }
+         
+         window.onload = onPageLoad;
+      </script>
+      <script>
+         var limit = 10;
+         var counter = 0;
+         var total = 0;
+         var index = 0;
+         var memberId = [];
+         
+         async function removeFields(e){
+            if(counter===limit) {
+               document.getElementById("limit-reached").style.display = "none";
+               document.getElementById("add-member-btn").style.display = "block";
+            }
+
+            let btnId = e.id.substr(3);
+            // Remove Button
+            e.parentElement.remove();
+            // Remove First Name 
+            var fndiv = document.getElementById("fn"+btnId);
+            fndiv.remove();
+            // Remove Last Name 
+            var lndiv = document.getElementById("ln"+btnId);
+            lndiv.remove();
+            var fn_lndiv = document.getElementById("fn_and_ln"+btnId);
+            fn_lndiv.remove();
+            counter = counter - 1;
+            memberId = memberId.filter(val => { return val!=btnId })
+            document.getElementById(`id_MemberEstimate_${btnId}`).remove();
+            document.getElementById(`id_MemberEstimate1_${btnId}`).remove();
+            updateAdditionalPrice(counter+1);
+            displayMember();
+         }
+         
+         async function addFields(){
+             if (counter == limit - 1)  {
+                 document.getElementById("limit-reached").style.display = "block";
+                 document.getElementById("add-member-btn").style.display = "none";
+                 //alert("You have reached the limit of adding " + counter + " members");
+             }
+             if( (counter < limit) && validatePreviousDependentInputField()) {
+                 var container = document.getElementById("membersContainer");
+                 var childNodes = container.childNodes;
+                 var len = childNodes.length;
+                 // Append a node with a random text
+                 // Create an <input> element, set its type and name attributes
+                 var divParent = document.createElement("div");
+                     divParent.id="fn"+index;
+                     divParent.className = "d-none d-lg-block pr-2 col-md-5 col-4";
+                 var fieldSet = document.createElement("fieldset");
+                     fieldSet.className = "form-group";
+                     divParent.appendChild(fieldSet);
+                 var divChild = document.createElement("div");
+                     fieldSet.appendChild(divChild);
+                 var input = document.createElement("input");
+                     input.type = "text";
+                     input.name = "firstname"+index;
+                     input.placeholder = "First name";
+                     input.id="id_dependent_member_fname"+index;
+                     input.className="inputrect form-control";
+                     input.maxLength="32";
+                     input.setAttribute("data-v-79db8364", "");
+                     input.onblur=() => {updateDependentFirstName(event.target)};
+                     input.onkeypress = () => {return nameValidation(event)};
+                     input.required = true;
+                     divChild.appendChild(input);
+                     container.appendChild(divParent);
+                 
+                 var divParent = document.createElement("div");
+                     divParent.id="ln"+index;
+                     divParent.className = "d-none d-lg-block pl-2 col-md-5 col-4";
+                 var fieldSet = document.createElement("fieldset");
+                     fieldSet.className = "form-group";
+                     divParent.appendChild(fieldSet);
+                 var divChild = document.createElement("div");
+                     fieldSet.appendChild(divChild);
+                 var input = document.createElement("input");
+                     input.type = "text";
+                     input.name = "lastname"+index;
+                     input.placeholder = "Last name";
+                     input.id="id_dependent_member_lname"+index;
+                     input.className="inputrect form-control";
+                     input.setAttribute("data-v-79db8364", "");
+                     input.maxLength="32";
+                     input.onblur=() => {updateDependentLastName(event.target)};
+                     input.onkeypress = () => {return nameValidation(event)};
+                     input.required = true;
+                     divChild.appendChild(input);
+                     container.appendChild(divParent);
+
+                 var divParent = document.createElement("div");
+                     divParent.id="fn_and_ln"+index;
+                     divParent.className = "d-block d-lg-none pl-2 col-md-10 col-8";
+                 var fieldSet = document.createElement("fieldset");
+                     fieldSet.className = "form-group";
+                     divParent.appendChild(fieldSet);
+                 var divChild = document.createElement("div");
+                     fieldSet.appendChild(divChild);
+                 var input = document.createElement("input");
+                     input.type = "text";
+                     input.name = "lastname"+index;
+                     input.placeholder = "First and Last name";
+                     input.id="id_dependent_member_fname_lname"+index;
+                     input.className="inputrect form-control";
+                     input.setAttribute("data-v-79db8364", "");
+                     input.maxLength="32";
+                     input.onblur=() => {updateDependentFirstAndLastName(event.target)};
+                     input.onkeypress = () => {return nameValidation(event)};
+                     input.required = true;
+                     divChild.appendChild(input);
+                     container.appendChild(divParent);
+         
+                 var divParent = document.createElement("div");
+                     divParent.id="rm"+index;
+                     divParent.className = "pl-2 pr-0 mt-2 col-md-2 col-4";
+                     divParent.innerHTML = '<div style="cursor:pointer" id="btn'+index+'" onclick="removeFields(this)"><img src="./../images/closebutton.svg" alt="" style="padding: 4; padding-left:0"><span style="font-size: small;">Remove</span></div>';
+                /* var anchor = document.createElement("a");
+                     anchor.title="Remove";
+                     anchor.onclick = "removeFields("+counter+")";
+                     anchor.name="remove"+counter;
+                     anchor.className = "font-14 text-decoration-none";
+                     anchor.style = "color: rgb(109, 109, 109);";
+                     divParent.appendChild(anchor);
+                 var link = document.createTextNode("Remove");
+                     anchor.appendChild(link);*/
+                 container.appendChild(divParent);
+                
+                 memberId = [...memberId, index];
+                 addCheckoutMemberField(index);
+                 addCheckoutMemberField1(index);
+         
+                 index++;
+                 counter++;
+         
+                 updateAdditionalPrice(counter+1);
+                 isCheckoutPossible();
+             }
+         }
+         
+         function validatePreviousDependentInputField() {
+            if(memberId.length>=1) {
+               var last_index = memberId[memberId.length-1];
+               
+               var firstNameInputComp = document.getElementById(`id_dependent_member_fname${last_index}`);
+               var lastNameInputComp = document.getElementById(`id_dependent_member_lname${last_index}`);
+               var firstAndLastNameInputComp = document.getElementById(`id_dependent_member_fname_lname${last_index}`);
+
+               var fn = firstNameInputComp.value;
+               var ln = lastNameInputComp.value;
+               // validateFields("First Name", firstNameInputComp, fn);
+               // validateFields("Last Name", lastNameInputComp, ln);
+               console.log(firstAndLastNameInputComp)
+         
+               if(fn!="" && ln!="")
+                  return true;
+               else if(firstAndLastNameInputComp.value.trim()!="")
+                  return true;
+               else return false;
+         
+            }
+            return true;
+         }
+         
+         function addCheckoutMemberField(index) {
+             var container = document.getElementById("id_MemberEstimate");
+         
+             var childId = `id_MemberEstimate_${index}`;
+             var memberName = getDependentName(index);
+             var memberPrice = additionalPrice[counter];
+         
+             var pParent = document.createElement("p");
+             pParent.id = childId;
+             pParent.style.display="none";
+             pParent.className ="add-member pl-3";
+             var spanChild1 = document.createElement("span");
+             spanChild1.textContent = memberName;
+             var spanChild2 = document.createElement("span");
+             spanChild2.className = "float-right d-lg-none d-block";
+             spanChild2.textContent = `$${memberPrice}/${periodUnitAbbr}`;
+             var spanChild3 = document.createElement("span");
+             spanChild3.className = "float-right d-lg-block d-none";
+             spanChild3.textContent = `$${memberPrice}/${periodUnitAbbr}`;
+             pParent.appendChild(spanChild1);
+             pParent.appendChild(spanChild2);
+             pParent.appendChild(spanChild3);
+             container.appendChild(pParent);
+         }
+         
+         function addCheckoutMemberField1(index) {
+             var container = document.getElementById("id_MemberEstimate1");
+         
+             var childId = `id_MemberEstimate1_${index}`;
+             var memberName = getDependentName(index);
+             var memberPrice = additionalPrice[counter];
+         
+             var pParent = document.createElement("p");
+             pParent.id = childId;
+             pParent.style.display="none";
+             pParent.className ="add-member pl-3";
+             var spanChild1 = document.createElement("span");
+             spanChild1.textContent = memberName;
+             var spanChild2 = document.createElement("span");
+             spanChild2.className = "float-right d-lg-none d-block";
+             spanChild2.textContent = `$${memberPrice}/${periodUnitAbbr}`;
+             var spanChild3 = document.createElement("span");
+             spanChild3.className = "float-right d-lg-block d-none";
+             spanChild3.textContent = `$${memberPrice}/${periodUnitAbbr}`;
+             pParent.appendChild(spanChild1);
+             pParent.appendChild(spanChild2);
+             pParent.appendChild(spanChild3);
+             container.appendChild(pParent);
+         }
+         
+         function updatePrimaryMemberPrice() {
+             var primary = document.getElementsByClassName("MemberEstimate_Primary");
+             var primaryMemberName = (fname!=undefined ? fname : "") + " " + (lname!=undefined ? lname : "");
+             primaryMemberName = primaryMemberName.trim();
+         
+             for(var i=0;i<primary.length;i++) {
+         
+             
+         
+             var spanChild = primary[i].getElementsByTagName("span");
+         
+            if(primaryMemberName!=="")
+               spanChild[0].textContent = primaryMemberName.trim();
+            else 
+               spanChild[0].textContent = 'Primary Member:';
+         
+             spanChild[1].textContent =  `$${itemPrice.item_price.tiers[0].price*1.0/100}/${periodUnitAbbr}` ;
+             spanChild[2].textContent =  `$${itemPrice.item_price.tiers[0].price*1.0/100}/${periodUnitAbbr}` ;
+             }
+         }
+         
+         function checkMemberChange() {
+             if(membersCount!==getMembersCount()) {
+                 membersCount = getMembersCount()
+                 fetchEstimate();
+             }
+         }
+         
+         function displayMember() {
+             checkMemberChange();
+             isCheckoutPossible();
+         
+             var container = document.getElementById("id_MemberEstimate");
+             var isMemberNameChanged = false;
+         
+             var j=0;
+             for(var i = 0;i<memberId.length;i++) {
+                 var index = memberId[i];
+         
+                 var childId = `id_MemberEstimate_${index}`;
+                 var child = document.getElementById(childId);
+                 var memberName = getDependentName(index);
+                 var memberPrice = additionalPrice[j];
+                 
+                 memberPrice =  memberPrice===0 ? "FREE" : `$${memberPrice}/${periodUnitAbbr}`;
+                      
+                 if(child) {
+                     child.style.display= memberName==="" ? "none" : "block"                 
+                     var spanchild = child.getElementsByTagName("span");
+                     if(spanchild.length===3) {
+                         if(spanchild[0].textContent!==memberName)
+                             isMemberNameChanged = true;
+                         spanchild[0].textContent = memberName;
+                         spanchild[1].textContent = memberPrice;
+                         spanchild[2].textContent = memberPrice;
+                     }
+                 } 
+                 
+                 if(memberName!=="")
+                     j++;   
+             }
+             displayMember1();
+         }
+         
+         function displayMember1() {
+             checkMemberChange();
+             isCheckoutPossible();
+             //updatePrimaryMemberPrice();
+             
+         
+             var container = document.getElementById("id_MemberEstimate1");
+             var isMemberNameChanged = false;
+         
+             var j=0;
+             for(var i = 0;i<memberId.length;i++) {
+                 var index = memberId[i];
+         
+                 var childId = `id_MemberEstimate1_${index}`;
+                 var child = document.getElementById(childId);
+                 var memberName = getDependentName1(index);
+                 var memberPrice = additionalPrice[j];
+                 
+                 memberPrice =  memberPrice===0 ? "FREE" : `$${memberPrice}/${periodUnitAbbr}`;
+                      
+                 if(child) {
+                     child.style.display= memberName==="" ? "none" : "block"                 
+                     var spanchild = child.getElementsByTagName("span");
+                     if(spanchild.length===3) {
+                         if(spanchild[0].textContent!==memberName)
+                             isMemberNameChanged = true;
+                         spanchild[0].textContent = memberName;
+                         spanchild[1].textContent = memberPrice;
+                         spanchild[2].textContent = memberPrice;
+                     }
+                 } 
+                 
+                 if(memberName!=="")
+                     j++;   
+             }
+         }
+
+         function validateDependentMember(){
+            var isNameValid = true;
+
+            for(var i=0;i<memberId.length;i++) {
+                 var fn = document.getElementById("fn" + memberId[i]).getElementsByTagName("input")[0].value.trim();
+                 var ln = document.getElementById("ln" + memberId[i]).getElementsByTagName("input")[0].value.trim();
+                 var fn_and_ln = document.getElementById("fn_and_ln" + memberId[i]).getElementsByTagName("input")[0].value.trim();
+
+                 if((validateName(fn) && validateName(ln)) || validateFullName(fn_and_ln)){
+                    isNameValid = true;
+                 }else{
+                    isNameValid = false;
+                    break;
+                 }
+            }
+
+            return isNameValid;
+         
+         }
+         
+         function getDependentMember() {
+             let dependentMember = [];
+         
+             for(var i=0;i<memberId.length;i++) {
+                 var fn = document.getElementById("fn" + memberId[i]).getElementsByTagName("input")[0].value.trim();
+                 var ln = document.getElementById("ln" + memberId[i]).getElementsByTagName("input")[0].value.trim();
+                 var fn_and_ln = document.getElementById("fn_and_ln" + memberId[i]).getElementsByTagName("input")[0].value.trim();
+
+                 if(fn!=="" && ln!=="") {
+                     var fullName = fn + " " + ln;
+
+                     if(fullName.replaceAll(" ", "")!="") {                
+                           dependentMember = [...dependentMember, fullName.trim()];
+                     }
+                  } else if(fn_and_ln!=="") {
+                     var fullName = fn_and_ln;
+                     if(fullName.replaceAll(" ", "")!="") {                
+                           dependentMember = [...dependentMember, fullName.trim()];
+                     }
+                  }
+             }
+         
+             return dependentMember;
+         }
+         
+         function getMembersCount() {
+             let dependentMember = getDependentMember();
+             dependentMember = dependentMember.filter(member => member!=="");
+             return dependentMember.length + 1;
+         }
+         
+         function getDependentName(index) {
+             var fn = document.getElementById("fn" + index).getElementsByTagName("input")[0].value.trim();
+             var ln = document.getElementById("ln" + index).getElementsByTagName("input")[0].value.trim();
+         
+             
+
+             if(fn==="" || ln==="")
+               return "";
+
+             var fullName = fn + " " + ln;
+         
+             if(fullName.trim()==="")
+                 return "";
+             else
+                 return fullName.trim();
+         }
+
+         function getDependentName1(index) {
+             var fn_ln = document.getElementById("fn_and_ln" + index).getElementsByTagName("input")[0].value.trim();
+                     
+
+             if(fn_ln==="")
+               return "";
+
+             var fullName = fn_ln;
+         
+             if(fullName.trim()==="")
+                 return "";
+             else
+                 return fullName.trim();
+         }
+         
+         function calculateAdditionalAmountForNewMember() {
+             let tiers = itemPrice.item_price.tiers;
+             let current_price;
+             let next_price;
+             let last_tier = 0;
+         
+             for(var qty = 2; qty <=limit+1; qty++) { 
+                 for(var i=last_tier;i<tiers.length;i++) {
+                     let su = tiers[i].starting_unit;
+                     let eu = tiers[i].ending_unit;
+                     if(eu==null)
+                         eu = Number.MAX_SAFE_INTEGER;
+         
+                     if(qty-1>=su && qty-1<=eu)
+                         current_price = tiers[i].price;
+         
+                     if(qty>=su && qty<=eu)
+                         next_price = tiers[i].price;
+         
+                     last_tier = i;
+                 }
+                 additionalPrice[qty-2] = (next_price - current_price)*1.0/100;
+                 current_price = next_price;
+             }
+         }
+         
+         function updateAdditionalPrice(additional_qty) {
+             let additional_price = additional_qty<limit ? additionalPrice[additional_qty-1] : 0;
+             let buttonElement = document.getElementById("id_additional_amount");
+         
+             if(additional_price===0)
+                 buttonElement.textContent = "Add More Members for FREE";
+             else if(memberId.length === 0)
+                 buttonElement.textContent = `Add Member ($${additional_price})`;
+             else
+                 buttonElement.textContent = `Add Another Member ($${additional_price})`;
+         }
+         
+      </script>
+      <script>
+         function createCheckoutSummary() {
+             var container = document.getElementById("id_PlanSummary");
+             //document.getElementById("id_ExternalName").textContent = itemPrice.item_price.external_name;
+         
+             if(item.item.metadata==null)
+                 return;
+
+             var planDescrtipionComp = document.getElementsByClassName("plan-description");
+
+             for(var i=0;i<planDescrtipionComp.length;i++)
+               planDescrtipionComp[i].textContent = item.item.metadata.description;
+         
+             var summary = item.item.metadata.specification;           
+
+             if(summary!=null && Array.isArray(summary) ) {
+                 for(var i=0;i<summary.length;i++) {
+                     var childNode = document.createElement("li");
+                     childNode.className="pb-1";
+                     childNode.textContent = summary[i];
+         
+                     container.appendChild(childNode);
+                 }
+             }
+         }
+         
+         function toggleCheckoutSummary() {
+             var summaryComp = document.getElementById("checkout-summary-mobile");
+             var summaryToggleComp = document.getElementById("checkout-summary-mobile-toggle");
+
+             imgElement = document.createElement("img");
+             
+             if(summaryToggleComp.textContent==="Hide Checkout Summary ") {
+                 summaryComp.className = "d-none";
+                 summaryToggleComp.textContent = "Show Checkout Summary ";
+                 imgElement.src="./../images/down-arrow.svg";
+             } else {
+                 summaryComp.className = ""
+                 summaryToggleComp.textContent="Hide Checkout Summary "
+                 imgElement.src="./../images/up-arrow.svg";
+             }
+             
+             summaryToggleComp.appendChild(imgElement);
+
+         }
+         
+      </script>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0">
+      <style>
+         /* Extra small device */
+         @media only screen and (max-width: 375px) {  
+
+            .expand-txt{
+               width: 132%;
+            }
+            
+         }
+
+         /* small device */
+         @media only screen and (max-width: 600px) { 
+
+              .expand-txt{
+                  width: 132%;
+            }
+
+            }
+
+            /* Tablet */
+         @media only screen and (min-width: 600px) { 
+
+            .expand-txt{
+                 width: 110%;
+               }
+
+            }
+
+              /* Tablet Landscape */
+         @media only screen and (min-width: 768px) { 
+
+            .expand-txt{
+                width: 110%;
+                }
+
+              }
+
+            /* desktop */
+       @media only screen and (min-width: 992px) { 
+
+            .expand-txt{
+               width: 130%;
+            }
+
+      }  
+      </style>
+      <style type="text/css">svg:not(:root).svg-inline--fa {
+         overflow: visible;
+         }
+         .svg-inline--fa {
+         display: inline-block;
+         font-size: inherit;
+         height: 1em;
+         overflow: visible;
+         vertical-align: -0.125em;
+         }
+         .svg-inline--fa.fa-lg {
+         vertical-align: -0.225em;
+         }
+         .svg-inline--fa.fa-w-1 {
+         width: 0.0625em;
+         }
+         .svg-inline--fa.fa-w-2 {
+         width: 0.125em;
+         }
+         .svg-inline--fa.fa-w-3 {
+         width: 0.1875em;
+         }
+         .svg-inline--fa.fa-w-4 {
+         width: 0.25em;
+         }
+         .svg-inline--fa.fa-w-5 {
+         width: 0.3125em;
+         }
+         .svg-inline--fa.fa-w-6 {
+         width: 0.375em;
+         }
+         .svg-inline--fa.fa-w-7 {
+         width: 0.4375em;
+         }
+         .svg-inline--fa.fa-w-8 {
+         width: 0.5em;
+         }
+         .svg-inline--fa.fa-w-9 {
+         width: 0.5625em;
+         }
+         .svg-inline--fa.fa-w-10 {
+         width: 0.625em;
+         }
+         .svg-inline--fa.fa-w-11 {
+         width: 0.6875em;
+         }
+         .svg-inline--fa.fa-w-12 {
+         width: 0.75em;
+         }
+         .svg-inline--fa.fa-w-13 {
+         width: 0.8125em;
+         }
+         .svg-inline--fa mask .fa-primary,
+         .svg-inline--fa mask .fa-secondary {
+         fill: black;
+         }
+         .fad.fa-inverse {
+         color: #fff;
+         }
+         .btn-circle {
+         width: 30px;
+         height: 30px;
+         padding: 6px 0px;
+         border-radius: 15px;
+         text-align: center;
+         font-size: 12px;
+         line-height: 1.42857;
+         }
+         .complete-btn-success {
+         width: 212px;
+         font-size: 16px;
+         color: #fff;
+         background: #6fb231;
+         border: 1px solid #6fb231;
+         height: 46px;
+         border-radius: 25px;
+         }
+         .checked {
+         color: #F58A00;
+         }
+
+         .display-allowed-members:hover + .allowed-member-list {
+            display: block;
+         }
+
+         .allowed-member-list {
+            display: none;
+         }
+
+
+      </style>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+      <link rel="shortcut icon" type="image/x-ico" href="https://www.1dental.com/favicon.ico">
+      <link href="https://fonts.googleapis.com/css?family=Nunito:400,400i,700&amp;display=swap" rel="stylesheet">
+      <link href="https://www.1dental.com/join/" rel="canonical">
+      <meta name="description" content="Save 20-60% on dental care with an affordable discount dental plan. From only $9.95/mo. Trusted by 9 million members. Join in minutes and use immediately!">
+      <title>Discount Dental Plans - 1Dental.com | Join and Use Immediately</title>
+      <link rel="stylesheet" href="https://qualbe-cdn.azureedge.net/dental-enroll/Prod/1289/dist/vendor.css">
+      <link rel="stylesheet" href="https://qualbe-cdn.azureedge.net/dental-enroll/Prod/1289/dist/style.css">
+      <link rel="stylesheet" href="./../css/modal.css">
+      <style type="text/css">iframe#_hjRemoteVarsFrame {display: none !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important;}</style>
+      <style id="trustedsite-tm-style" type="text/css">.trustedsite-body-noscroll{ overflow:hidden !important; width:100% !important;}</style>
+      <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+   </head>
+   <body>
+      <div id="app" style="overflow-y:auto;overflow-x: hidden;">
+         <div data-v-2e9eab10="" class="divbody bg-gray" style="overflow-y:auto;overflow-x: hidden; position: relative;">
+            <div data-v-24d10a5b="" data-v-2e9eab10="" class="bg-light bg-white" style="position: fixed;left: 0; right: 0; z-index: 1000;">
+               <div data-v-24d10a5b="" class="container">
+                  <div data-v-24d10a5b="" class="d-block">
+                     <nav data-v-24d10a5b="" class="navbar navbar-light bg-white navbar-expand">
+                        <a data-v-24d10a5b="" href="#" class="navbar-brand">
+                        <img data-v-24d10a5b="" src="./../images/1Dental-Logo.svg">
+                        </a>
+                        <div data-v-24d10a5b="" id="nav-collapse" class="navbar-collapse collapse" style="display: none;">
+                           <ul data-v-24d10a5b="" class="navbar-nav ml-auto mb-0 d-lg-block d-none">
+                              <a data-v-24d10a5b="" href="tel:855-588-8727" class="bold text-decoration-none" style="color: #0170D0;">
+                                 Call us at 855-588-8727
+                              </a>
+                           </ul>
+                           <ul data-v-24d10a5b="" class="navbar-nav ml-auto mb-0 d-lg-none d-block">
+                              <a data-v-24d10a5b="" href="tel:855-588-8727" class="bold text-decoration-none" style="color: #0170D0;">
+                                 855-588-8727
+                              </a>
+                           </ul>
+                        </div>
+                     </nav>
+                  </div>
+               </div>
+            </div>
+
+            <div style="margin-top:75px" ></div>
+
+            <div data-v-2e9eab10="" id="subhead"></div>
+            <div data-v-2e9eab10="" class="mt-2 d-lg-block d-none container bg-gray">
+               <div data-v-2e9eab10="" class="row py-3 ml-0 planBgCard">
+                  <div data-v-2e9eab10="" class="px-0 col-xl-11 col-10">
+                     <h2 data-v-2e9eab10="" class="mb-0 d-inline-block pt-2 plan-name" id="id_plan"></h2>
+                  </div>
+               </div>
+            </div>
+            <div data-v-2e9eab10="" class="container bg-gray">
+               <div class="row mt-3 d-lg-none">
+                  <div class="col-7">
+                     <h4 class="plan-name"></h4>
+                  </div>
+                  <div class="col-5">
+                     <h3  style="color: #396C9C;" >
+                        <sup>$</sup><span class="estimate-amount-sup"></span>
+                     </h3>
+                  </div>
+               </div>
+               <div class="row my-1 d-lg-none">
+                  <div class="col-12">
+                     <span>
+                     <h5 id="checkout-summary-mobile-toggle"  onclick="toggleCheckoutSummary();" style="color: #0170D0
+;">Show Checkout Summary <img src="./../images/down-arrow.svg"> </h5>
+</span>
+                  </div>
+               </div>
+               <div class="d-none" id="checkout-summary-mobile">
+                  <div class="row d-block d-lg-none" >
+                     <div data-v-2e9eab10="" class="col-12">
+                        <div data-v-477059e2="" data-v-2e9eab10="" id="checkout-subtotal" class=" text-left" style="display: block;">
+                           <div data-v-477059e2="" class=" p-3 mx-2 bg-white" style=" border-radius: 1.25rem; border-color: #FFFFFF; box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.161);">
+                              <h4 data-v-477059e2="" class="checkout-details gamma text-center plan-name"></h4>
+                              <div data-v-477059e2="" class="">
+                                 <div data-v-477059e2="" class="plan-benefits pt-0">
+                                    <div>
+                                       <div class="font-14 pt-0 pb-2 plan-description"></div>
+                                    </div>
+                                 </div>
+                                 <!----> <!---->
+                              </div>
+                              <h5 data-v-477059e2="" class="">Members</h5>
+                              <!----> 
+                              <div id="id_MemberEstimate1">
+                                 <p data-v-477059e2="" id="id_MemberEstimate_Primary" class="MemberEstimate_Primary add-member pt-lg-3 pl-3">
+                                    <span>
+                                    Primary Member
+                                    </span>
+                                    <!----> <!----> 
+                                    <span data-v-477059e2="" class="float-right d-lg-none d-block">
+                                    </span>
+                                    <!----> <!----> 
+                                    <span data-v-477059e2="" class="float-right d-lg-block d-none">
+                                    </span>
+                                 </p>
+                              </div>
+                              <hr data-v-477059e2="" class="subtotal-hr">
+                              <!----> 
+                              <div data-v-477059e2="" class="">
+                                 <span data-v-477059e2="" class="font-weight-bold">Plan Total Today:</span> 
+                                 <span data-v-477059e2="" class="font-weight-bold float-right">
+                                 <span id="estimate1"></span>
+                                 </span> 
+                                 <div data-v-477059e2="">
+                                    <!---->
+                                 </div>
+                              </div>
+                              <!----> <!---->
+                           </div>
+                           <!----> <!----> 
+                        </div>
+                     </div>
+                  </div>
+                  <div class="row d-lg-none mx-4 mt-4">
+                     <div class="col-4 mb-2">
+                        <img src="./../images/Love-It-Guarantee-Badge.png" height="80px" alt="" data-toggle="modal" data-target="#myModal3">
+                     </div>
+                     <div class="col-5 pl-1 mt-2">
+                        <img src="./../images/voted1.svg" alt="" data-toggle="modal" data-target="#myModal4">
+                     </div>
+                     <div class="col-3 mt-2">
+                        <img src="./../images/BBB-Blue.png" height="55px" alt="" data-toggle="modal" data-target="#myModal5">
+                     </div>
+                  </div>
+               </div>
+               <div class="row d-lg-none">
+                  <div class="col-12">
+                     <hr data-v-477059e2="" class="m-0 m-md-4 p-0">
+                  </div>
+               </div>
+               <div data-v-2e9eab10="" class="row mt-0">
+                  <div data-v-2e9eab10="" class="order-lg-2 pr-lg-0 col-lg-4 offset-lg-1 col-12">
+                     <div data-v-477059e2="" data-v-2e9eab10="" id="checkout-subtotal" class="text-left" style="display: block;">
+                        <div data-v-477059e2="" class="subtotal-details bg-white" style="max-height: 450px; border-radius: 1.25rem; border-color: #FFFFFF; box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.161);">
+                           <h4 data-v-477059e2="" class="checkout-details gamma text-center d-none d-lg-block" style="color: #4E4D4D;">Checkout Summary</h4>
+                           <div data-v-477059e2="" class="d-lg-block d-none">
+                              <div data-v-477059e2="" class="plan-benefits pt-2">
+
+                                 <div class="row">
+                                    <div class="col-6">
+                                       <h5 data-v-477059e2="" class="mb-0 plan-name" id="id_ExternalName" >
+                                    </h5>
+                                    </div>
+                                    <div class="col-6 text-center pl-0">
+                                       <h3 style="color: #396C9C;" >
+                                          <sup>$</sup><span class="estimate-amount-sup"></span>
+                                       </h3>
+                                    </div>                    
+                                 </div>
+
+                                 <div>
+                                    <div class="font-14 mt-2 pb-2 plan-description"></div>
+                                    <ul data-v-477059e2="" id="id_PlanSummary" class="ml-1 font-14">
+                                    </ul>
+                                 </div>
+                                 
+                              </div>
+                              <!----> <!---->
+                           </div>
+                           <div data-v-477059e2="" class="details-plan d-lg-none d-block">
+                              <!----> 
+                              <p data-v-477059e2="" class="pl-md-3 pl-2 mt-3 mb-0 font-weight-bold plan-name">
+                              </p>
+                              <!----> 
+                              <p data-v-477059e2="" class="pl-md-3 pl-2 mt-3 font-weight-bold d-lg-none d-block">
+                                 Members
+                              </p>
+                           </div>
+                           <h5 data-v-477059e2="" class="d-none d-lg-block">Members</h5>
+                           <!----> 
+                           <div id="id_MemberEstimate">
+                              <p data-v-477059e2="" id="id_MemberEstimate_Primary" class="MemberEstimate_Primary add-member pt-lg-3 pl-3">
+                                 <span>
+                                 Primary Member
+                                 </span>
+                                 <!----> <!----> 
+                                 <span data-v-477059e2="" class="float-right d-lg-none d-block">
+                                 </span>
+                                 <!----> <!----> 
+                                 <span data-v-477059e2="" class="float-right d-lg-block d-none">
+                                 </span>
+                              </p>
+                           </div>
+                           <hr data-v-477059e2="" class="subtotal-hr d-lg-block d-none">
+                           <!----> 
+                           <div data-v-477059e2="" class="d-lg-block d-none">
+                              <span data-v-477059e2="" class="font-weight-bold">Plan Total Today:</span> 
+                              <span data-v-477059e2="" class="font-weight-bold float-right">
+                              <span id="estimate"></span>
+                              </span> 
+                              <div data-v-477059e2="">
+                                 <!---->
+                              </div>
+                           </div>
+                           <!----> <!---->
+                        </div>
+                        <div class="container d-none d-lg-block">
+                           <div class="row my-3 text-center">
+                              <div class="col-4">
+                                 <img src="./../images/Love-It-Guarantee-Badge.png" height="80px" alt="" data-toggle="modal" data-target="#myModal3">
+                              </div>
+                              <div class="col-4 mt-2">
+                                 <img src="./../images/voted1.svg" alt="" data-toggle="modal" data-target="#myModal4">
+                              </div>
+                              <div class="col-4 mt-2">
+                                 <img src="./../images/BBB-Blue.png" height="55px" alt="" data-toggle="modal" data-target="#myModal5">
+                              </div>
+                           </div>
+                        </div>
+                        <div class="container d-none d-lg-block">
+                           <div class="row">
+                              <div class="col-12 text-center" style="line-height: 24px;">
+                                 <div>
+                                    Questions?
+                                 </div>
+                                 <div>
+                                    Speak to one of our helpful representatives!
+                                 </div>
+                                 <div>
+                                    Call us at <span><a style="display: inline-block;" data-v-24d10a5b="" href="tel:855-588-8727" class="text-blue text-decoration-none">855-588-8727</a></span>.
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="container d-none d-lg-block">
+                           <div style="border-radius: 1.25rem; background-color: #0E6CB6; padding: 25; margin: 25; text-align: center; color:#FFFFFF;">
+                              <p>
+                                 "I bought this yesterday and used this yesterday, saved me over 600 dollars for my one wisdom tooth!"
+                              </p>
+                              <p>
+                                 Brittany K, CO
+                              </p>
+                              <!--p>
+                                 <img style="color: #0E6CB6;" src="./../images/shopper-approved.svg" alt="">
+                              </p-->
+                              <p>
+                                 <img style="color: #0E6CB6;" src="./../images/ShopperApprovedLogo.svg" alt="" width="118px" height="60px"><!--span style="position: absolute;bottom: 73px;left: 233px;font-size: smaller">4.6</span-->
+                                 <!--br>
+                                 <span style="font-size:xx-small;position: absolute;bottom: 60px;left: 150px;">(Based on 1,789 Ratings)</span-->
+                              </p>
+                              <!--p style="font-size:xx-small">
+                                 (Based on 1,789 Ratings)
+                              </p-->
+                              <div class="col-12 text-center">
+                                 <!--div class="star-rating" title="70%">
+                                    <div class="back-stars">
+                                       <span class="fa fa-star checked"></span>
+                                       <span class="fa fa-star checked"></span>
+                                       <span class="fa fa-star checked"></span>
+                                       <span class="fa fa-star checked"></span>
+                                       <span class="fa fa-star-half-full checked"></span>
+                                       <i class="bi bi-star-half"></i>
+                                    </div>
+                                 </div-->
+                                 <!--span>4.6</span-->
+                              </div>
+                              <!--p style="font-size:xx-small">
+                                 (Based on 1,789 Ratings)
+                              </p-->
+                           </div>
+                        </div>
+                        <!----> <!----> 
+                     </div>
+                  </div>
+                  <div data-v-2e9eab10="" class="order-lg-1 col-lg-7 col-12">
+                     <div data-v-2e9eab10="">
+                        <form data-v-2e9eab10="" name="join-now" enctype="application/x-www-form-urlencoded" id="signup" novalidate="novalidate" class="join-now">
+                           <div data-v-2e9eab10="" style="padding-top: 10px;">
+                              <div data-v-2e9eab10="" class="paymentplan">
+                                 <div data-v-2e9eab10="">
+                                    <!----> 
+                                    <div data-v-2e9eab10="" class="row mt-lg-4 mt-0 pt-0 col-12" style="padding-bottom: 10px;">
+                                          <h5 data-v-2e9eab10="" class="mb-0 step-title" style="color: #396C9C;">
+                                             Step 1: Enter Your Information</h5>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                       <div data-v-2e9eab10="" class="pr-2 col-6">
+                                          <fieldset data-v-2e9eab10="" class="form-group" id="__BVID__14">
+                                             <!---->
+                                             <div  role="group">
+                                                <input data-v-2e9eab10="" tabindex="1" id="fname" name="fname" type="text" 
+                                                   placeholder="First name" class="inputrect form-control" maxlength="32" 
+                                                   data-vv-as="First name" data-vv-validate-on="blur|input" 
+                                                   data-hj-allow="" required onblur="updateFirstName(this)"
+                                                   onkeypress="return nameValidation(event)"> 
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                       <div data-v-2e9eab10="" class="pl-2 col-6">
+                                          <fieldset data-v-2e9eab10="" class="form-group" id="__BVID__17">
+                                             <!---->
+                                             <div role="group">
+                                                <input data-v-2e9eab10="" tabindex="2" id="lname" name="lname" type="text" placeholder="Last name" class="inputrect form-control" maxlength="32" data-vv-as="Last name" data-vv-validate-on="blur|input" required onblur="updateLastName(this)"
+                                                   onkeypress="return nameValidation(event)"> 
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                       <div data-v-2e9eab10="" class="pr-lg-2 col-md-6">
+                                          <fieldset data-v-2e9eab10="" id="email" class="form-group">
+                                             <!---->
+                                             <div role="group">
+                                                <input data-v-2e9eab10="" tabindex="3" id="id_email" name="email" type="email" placeholder="Email address" class="inputrect form-control" maxlength="64" data-vv-as="Email" data-vv-validate-on="blur|input" required 
+                                                   onblur="updateEmail(this)"
+                                                   onkeypress="return emailValidation(event)"> 
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                       <div data-v-2e9eab10="" class="pl-lg-2 col-md-6">
+                                          <fieldset data-v-2e9eab10="" id="phone" class="form-group">
+                                             <div tabindex="5" role="group">
+                                                <input data-v-2e9eab10="" tabindex="5" id="id_phone" name="phone" type="tel" placeholder="Phone" class="inputrect form-control" maxlength="20" data-vv-as="Phone" data-vv-validate-on="blur" required onblur="updatePhone(this)" onkeypress="return phoneValidation(event)" > 
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                       <div data-v-2e9eab10="" class="col-12">
+                                          <fieldset data-v-2e9eab10="" id="address1" class="form-group">
+                                             <!---->
+                                             <div role="group">
+                                                <input data-v-2e9eab10="" tabindex="6" id="id_address1" name="address1" type="text" placeholder="Mailing Address" class="inputrect form-control" maxlength="64" data-vv-as="Address" data-vv-validate-on="blur" data-hj-allow="" required 
+                                                   onblur="updateAddress1(this)"
+                                                   onkeypress="return mailingAddressValidation(event)"> 
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                       <div data-v-2e9eab10="" class="col-12">
+                                          <fieldset data-v-2e9eab10="" id="address2" class="form-group">
+                                             <!---->
+                                             <div role="group">
+                                                <input data-v-2e9eab10="" tabindex="7" id="id_address2" name="address2" type="text" placeholder="Mailing Address line 2 (optional)" class="inputrect form-control" maxlength="32" data-vv-validate-on="blur" data-vv-as="Address 2" data-hj-allow="" 
+                                                   onblur="updateAddress2(this)"
+                                                   onkeypress="return mailingAddressValidation(event)">
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                       <div data-v-2e9eab10="" class="pr-lg-2 col-md-6">
+                                          <fieldset data-v-2e9eab10="" id="city" class="form-group">
+                                             <!---->
+                                             <div role="group">
+                                                <input data-v-2e9eab10="" tabindex="8" id="id_city" name="city" type="text" placeholder="City" class="inputrect form-control" maxlength="32" data-vv-validate-on="blur" data-vv-as="City" data-hj-allow="" required aria-colcount="35" 
+                                                   onblur="updateCity(this)"
+                                                   onkeypress="return cityValidation(event)"> 
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                       <div data-v-2e9eab10="" class="px-lg-2 pr-2 col-md-3 col-6">
+                                          <fieldset data-v-2e9eab10="" id="zipcd" class="form-group">
+                                             <!---->
+                                             <div role="group">
+                                                <input data-v-2e9eab10="" tabindex="9" onblur="updateZipCode(this);" id="id_zipcd" name="zipcd" type="text" placeholder="Zip Code" class="inputrect form-control" maxlength="5" data-vv-as="Zip Code" data-vv-validate-on="input|blur" data-hj-allow="" required aria-colcount="35" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);"> 
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                       <div data-v-2e9eab10="" class="pl-2 col-md-3 col-6">
+                                          <fieldset data-v-2e9eab10="" id="stateselect" class="form-group">
+                                              <div role="group">
+                                             <!---->
+                                             <select id="state" tabindex="10" input data-v-2e9eab10="" name="stateselect"  class="inputrect form-control" data-hj-allow="" id="__BVID__38" required
+                                                   onkeypress="return stateValidation(event)" onblur="updateState(event)" 
+                                                   style="position: relative;">
+                                                   <option value="">State</option>
+                                             </select>
+                                             </div>
+                                          </fieldset>
+                                       </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="container">
+                                       <div data-v-2e9eab10="" class="section-header">
+                                          <div data-v-2e9eab10="" class="row custom-control custom-checkbox billing-address-same-as-mailing-checkbox billing-address-same-checked">
+                                             <input tabindex="11" id="samebilingaddresscheckbox" type="checkbox" name="samebilingaddresscheckbox" autocomplete="off" class="custom-control-input" value="true" onclick="copyBillingAddress(this)" checked>
+                                             <label for="samebilingaddresscheckbox" class="custom-control-label">Billing address same as mailing</label>
+                                          </div>
+                                          <div class="row my-2">
+                                             <span class="px-4 font-weight-normal" id="billing-address-full">
+                                                 
+                                             </span>
+                                          </div>
+                                       </div>
+
+                                    </div>
+                                    <div data-v-2e9eab10="" id="billingAddress" style="display: none;">
+                                       <div data-v-2e9eab10="" class="row">
+                                          <div data-v-2e9eab10="" class="col-12">
+                                             <fieldset data-v-2e9eab10="" id="BillingAddress1" class="form-group">
+                                                <!---->
+                                                <div role="group">
+                                                   <input data-v-2e9eab10="" tabindex="12" id="id_BillingAddress1" name="BillingAddress1" type="text" placeholder="Billing address" class="inputrect form-control" maxlength="64" data-vv-as="Billing address" data-vv-validate-on="blur" data-hj-allow="" required 
+                                                      onblur="updateBillingAddress1(this)"
+                                                      onkeypress="return mailingAddressValidation(event)"> 
+                                                </div>
+                                             </fieldset>
+                                          </div>
+                                       </div>
+                                       <div data-v-2e9eab10="" class="row">
+                                          <div data-v-2e9eab10="" class="col-12">
+                                             <fieldset data-v-2e9eab10="" id="BillingAddress2" class="form-group">
+                                                <div role="group">
+                                                   <input data-v-2e9eab10="" tabindex="13" id="id_BillingAddress2" name="BillingAddress2" type="text" placeholder="Billing address line 2 (optional)" class="inputrect form-control" maxlength="32" data-vv-validate-on="blur" data-vv-as="Billing address 2" data-hj-allow="" 
+                                                      onblur="updateBillingAddress2(this)"
+                                                      onkeypress="return mailingAddressValidation(event)">
+                                                </div>
+                                             </fieldset>
+                                          </div>
+                                       </div>
+                                       <div data-v-2e9eab10="" class="row">
+                                          <div data-v-2e9eab10="" class="pr-lg-2 col-md-6">
+                                             <fieldset data-v-2e9eab10="" id="BillingCity" class="form-group">
+                                                <!---->
+                                                <div role="group">
+                                                   <input data-v-2e9eab10="" tabindex="14" id="id_BillingCity" name="BillingCity" type="text" placeholder="City" class="inputrect form-control" maxlength="32" data-vv-validate-on="blur" data-vv-as="City" data-hj-allow="" required 
+                                                      onblur="updateBillingCity(this)"
+                                                      onkeypress="return cityValidation(event)"> 
+                                                </div>
+                                             </fieldset>
+                                          </div>
+                                          <div data-v-2e9eab10="" class="px-lg-2 pr-2 col-md-3 col-6">
+                                             <fieldset data-v-2e9eab10="" id="Billingzipcode" class="form-group">
+                                                <!---->
+                                                <div role="group">
+                                                   <input data-v-2e9eab10="" tabindex="15" id="id_Billingzipcode" name="Billingzipcode" type="text" placeholder="Zip Code" class="inputrect form-control" maxlength="5" data-vv-as="Zip Code" data-vv-validate-on="blur|input" data-hj-allow="" required onblur="updateBillingZipCode(this)"> 
+                                                </div>
+                                             </fieldset>
+                                          </div>
+                                          <div data-v-2e9eab10="" class="pl-2 col-md-3 col-6">
+                                             <fieldset data-v-2e9eab10="" id="Billingstateselect" class="form-group">
+                                                <!---->
+                                                <div role="group">
+                                                   <select id="Billingstate" tabindex="16" input data-v-2e9eab10="" name="Billingstateselect" class="inputrect form-control fa-lg" data-hj-allow="" id="__BVID__71" required 
+                                                      onblur="updateBillingState(event)"
+                                                      onkeypress="return stateValidation(event)"  
+                                                      style="position: relative;">
+                                                      <option value="">State</option>
+                                                   </select>
+                                                </div>
+                                             </fieldset>
+                                          </div>
+                                       </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                       <!---->
+                                    </div>
+
+                                    <div class="row" style="position: relative; z-index: 14;">
+                                       <div class="md-12 col-md-7">
+                                             <div data-v-2e9eab10="" class="mb-3 d-lg-block d-none">
+                                                <span data-v-2e9eab10="" class="font-weight-normal float-left" style="color:#396C9C;">
+                                                   <h5>Step 2: Include Additional Members</h5>
+                                                </span>
+                                              
+                                             </div>
+                                       </div>
+                                       <div class="md-12 col-md-5" style="border-radius: 1.25rem;;">
+                                             <div data-v-2e9eab10="" class="mb-3 d-lg-block d-none">
+                                                <div  class="display-allowed-members" style="position: relative; z-index: 4;">
+                                                   <span data-v-2e9eab10="" class="float-right pt-1  ">
+                                                      <a data-v-2e9eab10="" href="##" class="text-decoration-none font-12" >
+                                                      <img data-v-2e9eab10="" src="https://digc4xe6kfaun.cloudfront.net/images/new-enroll/Info_BPSP.svg" alt="30 Days">  &nbsp; 
+                                                      Add Everyone You Care About
+                                                      </a>  
+                                                    </span>             
+                                                </div> 
+                                                
+                                                <div data-v-2e9eab10="" class="mb-3 ml-0 pl-3 ml-xl-3 pl-xl-5 allowed-member-list" style="z-index: 2; position: absolute; margin-top: -5px; left: -10; right: -55;">
+                                                   <div >
+                                                      <div data-v-79db8364="" class="pt-3 pl-5 bg-white font-12 text-blue" style="position:absolute; border-radius: 1.25rem;" >
+                                                         <p class="mb-0 pt-2">Seriously! Including:</p>
+                                                         <ul class="pl-2 pb-0 mb-1 font-12">
+                                                            <li>
+                                                               Spouse or Partner
+                                                            </li>
+                                                            <li>
+                                                               Children or Adult Children
+                                                            </li>
+                                                            <li>
+                                                               Grandchildren
+                                                            </li>
+                                                            <li>
+                                                               Senior Parents or Grandparents &nbsp;
+                                                            </li>
+                                                            <li>
+                                                               Siblings
+                                                            </li>
+                                                         </ul>
+                                                      </div>
+                                                   </div>
+                                                </div>
+                                                
+                                               
+                                             </div>
+                                              
+
+
+                                             
+                                       </div>
+                                    </div>
+
+
+                                    <div data-v-2e9eab10="" class="row">
+                                       <div data-v-2e9eab10="" class="col-md-12">
+                                          <div data-v-2e9eab10="" class="mb-3 d-lg-none d-block">
+                                             <p data-v-2e9eab10="" class="font-weight-normal mb-2">
+                                             <h5 style="color: #396C9C">Step 2: Include Additional Members:</h5>
+                                             </p>
+ 
+                                             <div data-v-2e9eab10="" class="mb-0" style="display: inline-block;">
+                                                <div class="display-allowed-members" style="position:  relative; z-index: 3; display: inline-block;">                                           
+                                                   <a data-v-2e9eab10="" href="##" class="text-decoration-none font-12">
+                                                   <img data-v-2e9eab10="" src="https://digc4xe6kfaun.cloudfront.net/images/new-enroll/Info_BPSP.svg" alt="30 Days"> &nbsp;
+                                                   Add Everyone You Care About
+                                                   </a>                                                
+                                                </div>  
+                                                
+                                                <div data-v-2e9eab10="" class="mb-3 allowed-member-list" style="z-index: 2; position: absolute; margin-top: -25px; left: 0; right: -15;">
+                                                   <div >
+                                                      <div data-v-79db8364="" class="pt-3 pl-5 bg-white font-12 text-blue" style="position:absolute; border-radius: 1.25rem;">
+                                                         <p class="mb-0 pt-2">Seriously! Including:</p>
+                                                         <ul class="pl-2 pb-0 mb-1 font-12">
+                                                            <li>
+                                                               Spouse or Partner
+                                                            </li>
+                                                            <li>
+                                                               Children or Adult Children
+                                                            </li>
+                                                            <li>
+                                                               Grandchildren
+                                                            </li>
+                                                            <li>
+                                                               Senior Parents or Grandparents &nbsp;
+                                                            </li>
+                                                            <li>
+                                                               Siblings
+                                                            </li>
+                                                         </ul>
+                                                      </div>
+                                                   </div>
+                                                </div>                                                
+
+
+                                             </div>
+                                                                                           
+
+
+
+
+                                          </div>
+                                          <!----> 
+                                          <!--div style="padding:5px"></div-->
+                                          <!--
+                                             Add Fields Dynamically
+                                             --> 
+                                          <div id="additionalMembers">
+                                             <div id="membersContainer" class="row bg-lightestGray">
+                                                
+                                             </div>
+                                             <div id="limit-reached" class="text-center" style="display: none;">
+                                                Need to add more members? Give us a call at  <span><a style="display: inline-block;" data-v-24d10a5b="" href="tel:855-588-8727" class="text-blue text-decoration-none">855-588-8727</a></span>.
+                                             </div>
+                                          </div>
+                                          <div id="add-member-btn" class="m-0" data-v-2e9eab10="" style="position: absolute;display: block;">
+                                             <button data-v-2e9eab10="" type="button" class="btn add-member-green-btn mt-2 pr-2 btn-input-label" style="width: 300px;"
+                                                onclick="addFields()" >
+                                                <svg data-v-2e9eab10="" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="plus-circle" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="shadow-icon svg-inline--fa fa-plus-circle fa-w-16 fa-xs" style="height: 15px; width: 40px;">
+                                                   <path data-v-2e9eab10="" data-v-6b929086="" fill="currentColor" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"></path>
+                                                </svg>
+                                                <span id="id_additional_amount">Add Member</span> 
+                                             </button>
+                                          </div>
+                                       </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                       <div data-v-2e9eab10="" class="tier-select mt-4 mb-2 col-12"></div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="step-3 pt-3" style="margin-top: 30px;">
+                                       <div data-v-2e9eab10="" class="row">
+                                          <div class="col-12">
+                                             <hr data-v-2e9eab10="">
+                                          </div>
+                                          <!-- <div data-v-2e9eab10="" class="col-12">
+                                             <h5 style="display:inline-block;" data-v-2e9eab10="" class="step-title mb-0">3. Payment and confirmation  
+                                             </h5>
+                                             </div> -->
+                                          <div class="col-12">
+                                             <button data-v-2e9eab10="" id="checkout-button" type="button" class="btn bold btn complete-btn my-3 btn-input-label d-block ml-0" style="width: 100%; background-color: #A3A3A3; border:#A3A3A3;" onclick="openCheckoutPopup()" disabled>
+                                                Continue to Checkout
+                                          </div>
+                                       </div>
+                                       <div id="checkoutContainer" style="visibility: hidden;">
+                                          <iframe id="checkoutIframe" scrolling="no" width="70%" height="2%" src=""></iframe>
+                                       </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" style="display: none;">
+                                    <div data-v-2e9eab10="" class="row">
+                                    <div data-v-2e9eab10="" class="col-12">
+                                    <fieldset data-v-2e9eab10="" id="BillingAddress1" class="form-group">
+                                    <!---->
+                                    <div tabindex="-1" role="group">
+                                    <input data-v-2e9eab10="" id="id_BillingAddress1" name="BillingAddress1" type="text" placeholder="Billing address" class="inputrect form-control" maxlength="64" data-vv-as="Billing address" data-vv-validate-on="blur" data-hj-allow=""> <!----><!----><!----><!---->
+                                    </div>
+                                    </fieldset>
+                                    </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                    <div data-v-2e9eab10="" class="col-12">
+                                    <fieldset data-v-2e9eab10="" id="BillingAddress2" class="form-group">
+                                    <!---->
+                                    <div tabindex="-1" role="group">
+                                    <input data-v-2e9eab10="" id="id_BillingAddress2" name="BillingAddress2" type="text" placeholder="Billing address line 2 (optional)" class="inputrect form-control" maxlength="32" data-vv-validate-on="blur" data-vv-as="Billing address 2" data-hj-allow=""><!----><!----><!---->
+                                    </div>
+                                    </fieldset>
+                                    </div>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="row">
+                                    <div data-v-2e9eab10="" class="pr-lg-2 col-md-6">
+                                    <fieldset data-v-2e9eab10="" id="BillingCity" class="form-group">
+                                    <!---->
+                                    <div tabindex="-1" role="group">
+                                    <input data-v-2e9eab10="" id="id_BillingCity" name="BillingCity" type="text" placeholder="City" class="inputrect form-control" maxlength="32" data-vv-validate-on="blur" data-vv-as="City" data-hj-allow=""> <!----><!----><!----><!---->
+                                    </div>
+                                    </fieldset>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="px-lg-2 pr-2 col-md-3 col-6">
+                                    <fieldset data-v-2e9eab10="" id="Billingzipcode" class="form-group">
+                                    <!---->
+                                    <div tabindex="-1" role="group">
+                                    <input data-v-2e9eab10="" id="id_Billingzipcode" name="Billingzipcode" type="text" placeholder="Zip Code" class="inputrect form-control" maxlength="5" data-vv-as="Zip Code" data-vv-validate-on="blur|input" data-hj-allow=""> <!----><!----><!----><!---->
+                                    </div>
+                                    </fieldset>
+                                    </div>
+                                    <div data-v-2e9eab10="" class="pl-2 col-md-3 col-6">
+                                    <fieldset data-v-2e9eab10="" id="Billingstateselect" class="form-group">
+                                    <!---->
+                                    <div tabindex="-1" role="group">
+                                    <input data-v-2e9eab10="" name="Billingstateselect" type="text" disabled="disabled" class="inputrect form-control" data-hj-allow="" id="__BVID__71"> 
+                                    <input data-v-2e9eab10="" type="hidden" name="Billingstate" id="Billingstate" data-vv-as="State" class="inputrect" aria-required="true" aria-invalid="false"> <!----><!----><!----><!---->
+                                    </div>
+                                    </fieldset>
+                                    </div>
+                                    </div>
+                                    </div>
+                                    <div data-v-2e9eab10="">
+                                    <div data-v-2e9eab10="" class="row">
+                                    <div data-v-2e9eab10="" class="col-12">
+                                    <p data-v-2e9eab10="" class="billing-address-copied-full"></p>
+                                    </div>
+                                    </div>
+                                    </div>
+                                    <!-- <div data-v-2e9eab10="" class="row">
+                                       <div data-v-2e9eab10="" class="col-12">
+                                          <hr data-v-2e9eab10="" class="mt-2">
+                                       </div>
+                                       </div> -->
+                                 </div>
+                              </div>
+                           </div>
+                     </div>
+                     </form> 
+                  </div>
+               </div>
+            </div>
+
+            <div class="container d-block d-lg-none">
+               <div class="row">
+                  <div class="col-12 text-center" style="line-height: 24px;">
+                     <div>
+                        Questions?
+                     </div>
+                     <div>
+                        Speak to one of our helpful representatives!
+                     </div>
+                     <div>
+                        Call us at <span><a style="display: inline-block;" data-v-24d10a5b="" href="tel:855-588-8727" class="text-blue text-decoration-none">855-588-8727</a></span>.
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            <div data-v-2e9eab10="" class="container">
+               <div data-v-41d56d94="" data-v-2e9eab10="" class="mt-5 pt-2">
+                  <div data-v-41d56d94="" class="container">
+                     <div data-v-41d56d94="" class="row">
+                        <div data-v-41d56d94="" class="text-center col-12">
+                           <div data-v-41d56d94="" id="content-end" class="zeta text-center content-end font-14">
+                              Copyright © 1Dental - All Rights Reserved <br data-v-41d56d94=""> <br data-v-41d56d94=""> 
+                              <a data-v-41d56d94="" class="text-decoration-none"  rel="nofollow" title="Discount Dental Plan Privacy" href="http://www.1dental.com/safe/" target="_blank">Security & Privacy</a>&nbsp;|&nbsp;
+                              <a data-v-41d56d94="" class="text-decoration-none"  rel="nofollow" title="Terms and Conditions" href="http://www.1dental.com/terms/" target="_blank">Terms & Conditions</a>&nbsp;|&nbsp;
+                              <a data-v-41d56d94="" class="text-decoration-none"  rel="nofollow" title="Guarantee Policy" href="http://www.1dental.com/refunds/" target="_blank">Refunds & Guarantee Policy</a>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+         </div>
+      </div>
+
+      <div class="qmodal fade show" id="myModal1" role="dialog">
+      <div class="qmodal-dialog modal-dialog">
+      <!-- Modal content-->
+         <div class="qmodal-content">
+
+            <div class="qmodal-header">
+                  <div class="container">
+                  <div class="row">
+                     <div class="col text-center">
+                        <button class="close-button" data-toggle="modal" data-target="#myModal1"></button>
+                     </div>
+                  </div>
+                  </div>
+            </div>
+
+
+
+            <div class="qmodal-body text-center">
+               <h4 data-v-79db8364="" class="font-weight-normal text-blue">Possible Duplicate</h4>
+               <hr style=" color: #D9D9E1;">
+               <p data-v-79db8364="" style="color: #4E4D4D; font : Nunito;">
+               Looks like there is already a member with that information.
+               </p>
+               <p data-v-79db8364="" class="font-weight-normal" style="color: #4E4D4D; font: Nunito">
+               <span>Give us a call at <span><a style="display: inline-block;" data-v-24d10a5b="" href="tel:855-588-8727" class="text-blue text-decoration-none">855-588-8727</a></span> or continue. </span>
+               </p>
+               <button data-v-2e9eab10="" type="button" data-toggle="modal" data-target="#myModal1" class="complete-btn-success my-3">
+               Continue
+               </button>
+            </div>
+         </div>
+      </div>
+      </div>
+
+      <div class="qmodal fade show" id="myModal3" style="position: absolute; ;" role="dialog">
+         <div class="qmodal-dialog qmodal-dialog-centered modal-dialog">
+            <!-- Modal content-->
+            <div class="qmodal-content">
+
+               <div class="qmodal-header">
+                     <div class="container">
+                     <div class="row">
+                        <div class="col text-center">
+                           <button class="close-button" data-toggle="modal" data-target="#myModal3"></button>
+                        </div>
+                     </div>
+                     </div>
+               </div>
+
+               <div class="qmodal-body">
+                  <div class="container">
+                     <div class="row">
+                        <div class="col-7">
+                           <div class="row">
+                              <div class="col-12">
+                                 <h3 data-v-79db8364="" class="font-weight-normal text-center" style="color: #396C9C;
+                                 "                    >Love it or get your money back.</h3>
+                                 <hr style=" color: #D9D9E1;">
+                                 <p data-v-79db8364="" class="expand-txt" style="color: #4E4D4D;font : Nunito;">
+                                    We want you to be in love with your plan. Not just satisfied. <b>In love</b>. Take up to 30 days to use your plan as much as you want. If you don’t love all the money you save at the dentist, we’ll give you a 100% refund for your plan.
+                                 </p>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="col-5">
+                           <img src="./../images/30_day_guarantee_big.svg" alt="" style="width: 114%;height: 100%; max-height: 270px;   padding-bottom: 50%;">
+                        </div>
+                     </div>
+                     <div class="row">
+                        <div class="col-12">
+                           <p data-v-79db8364="" style="color: #4E4D4D; font : Nunito;">
+                              No questions asked. Even after you’ve used it – that’s crazy.
+                           </p>
+                           <p data-v-79db8364="" style="color: #4E4D4D; font : Nunito;">
+                              1Dental is a completely risk-free, guaranteed way to save on the dental care you need. The only way you lose is by walking away. 
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+
+      <div class="qmodal fade show" id="myModal4" role="dialog">
+         <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="qmodal-content">
+
+               <div class="qmodal-header">
+                     <div class="container">
+                     <div class="row">
+                        <div class="col text-center">
+                           <button class="close-button" data-toggle="modal" data-target="#myModal4"></button>
+                        </div>
+                     </div>
+                     </div>
+               </div>
+         
+               <div class="qmodal-body">
+                  <h4 data-v-79db8364="" class="font-weight-normal text-center" style="color: #396C9C;">Company Awards</h4>
+                  <hr style=" color: #D9D9E1;">
+                  <div class="container">
+                     <div class="row">
+                        <div class="col-12">
+                           <p data-v-79db8364="" style="color: #4E4D4D; font : Nunito;">
+                              At 1Dental, we are very fortunate to have won many awards over the years. Our gratitude goes to our faithful customers, talented and team-oriented employees, and partners who have made all of this possible since 1998!
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="container my-3  mx-1">
+                     <div class="row">
+                        <div class="col-auto">
+                           <h6 data-v-79db8364="" class="font-weight-normal" style="color: #396C9C;">National Awards</h6>
+                        </div>
+                        <div class="col ">
+                           <hr style=" color: #D9D9E1;">
+                        </div>
+                     </div>
+                     <div class="row my-2">
+                        <div class="col-3">
+                           <img src="./../images/inc_500.svg" alt="" width="55px" height="75px">
+                        </div>
+                        <div class="col-9">
+                           <span class="font-weight-bold">2-Time Winner – Inc. Magazine</span>
+                           <ul style="margin-left: 0; padding-left: 25; color: #4E4D4D;">
+                              <li>
+                                 Listed as one of Inc 5000 Fastest Growing Private Companies
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                     <div class="row my-2">
+                        <div class="col-3">
+                           <img src="./../images/entrepreneur_magazine.svg" alt="">
+                        </div>
+                        <div class="col-9">
+                           <span class="font-weight-bold">2-Time Winner – Entrepreneur Magazine</span>
+                           <ul style="margin-left: 0;  padding-left: 25; color: #4E4D4D;">
+                              <li>
+                                 National Top Company CultureiQ (#10 and #14 medium size)
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                     <div class="row my-2">
+                        <div class="col-3">
+                           <img src="./../images/fortune50.svg" alt="">
+                        </div>
+                        <div class="col-9">
+                           <span class="font-weight-bold">Winner – Fortune Magazine</span>
+                           <ul style="margin-left: 0; padding-left: 25; color: #4E4D4D;">
+                              <li>
+                                 Nationally Ranked, #7 Best Small Workplace
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="container my-3 mx-1">
+                     <div class="row">
+                        <div class="col-auto">
+                           <h6 data-v-79db8364="" class="font-weight-bold" style="color: #396C9C;">Regional Awards</h6>
+                        </div>
+                        <div class="col ">
+                           <hr style=" color: #D9D9E1;">
+                        </div>
+                     </div>
+                     <div class="row my-2">
+                        <div class="col-3">
+                           <img src="./../images/dallas_news_top_100.svg" alt="">
+                        </div>
+                        <div class="col-9 ">
+                           <span class="font-weight-bold">4-Time Winner – Dallas Morning News</span>
+                           <ul style="margin-left: 0; padding-left: 25; color: #4E4D4D;">
+                              <li>
+                                 Top 100 Places to Work - #9, #10, #10, #16 Small Companies
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                     <div class="row my-2">
+                        <div class="col-3">
+                           <img src="./../images/fwinc.svg" alt="">
+                        </div>
+                        <div class="col-9">
+                           <span class="font-weight-bold">5-Time Winner – Fort Worth Inc. Magazine</span>
+                           <ul style="margin-left: 0; padding-left: 25; color: #4E4D4D;">
+                              <li>
+                                 Best Companies to Work for in Fort Worth
+                                 <ul style="margin-left: 0; padding-left: 25; list-style-type: disc;">
+                                    <li>
+                                       2022 - First Place Small Employer
+                                    </li>
+                                    <li>
+                                       #2, #5, #7, #13 - Medium to Large Companies
+                                    </li>
+                                 </ul>
+                              </li>
+                              <li>
+                                 Entrepreneur of Excellence - Randall Meinen, CEO 1Dental
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                     <div class="row my-2">
+                        <div class="col-3">
+                           <img src="./../images/DMN_Ethics_White.svg" alt="">
+                        </div>
+                        <div class="col-9">
+                           <span class="font-weight-bold">Winner – Dallas Morning News</span>
+                           <ul style="margin-left: 0; padding-left: 25; color: #4E4D4D;">
+                              <li>
+                                 Best Overall Ethics
+                              </li>
+                              <li>
+                                 Best at Encouraging New Ideas
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+
+      <div class="qmodal fade show" id="myModal5" role="dialog">
+         <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="qmodal-content">
+               <div class="qmodal-header">
+                     <div class="container">
+                     <div class="row">
+                        <div class="col text-center">
+                           <button class="close-button" data-toggle="modal" data-target="#myModal5"></button>
+                        </div>
+                     </div>
+                     </div>
+               </div>               
+               <div class="qmodal-body">
+                  <h4 data-v-79db8364="" class="font-weight-normal text-center" style="color: #396C9C;">Better Business Bureau</h4>
+                  <hr style=" color: #D9D9E1;">
+                  <div class="container">
+                     <div class="row">
+                        <div class="col-12">
+                           <p>
+                              We are proud to have earned an A+ rating with the Better Business Bureau — an organization that promotes accountability and honesty between businesses and their customers.
+                           </p>
+                           <p>
+                              1Dental’s #1 core value is “Respect others as inherently valuable.” Our goal is to treat customers with respect and integrity in everything we do.
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="container">
+                     <div class="d-flex flex-row">
+                        <div class="">
+                           <div class="d-flex flex-column">
+                              <div class="my-2" style="color: #396C9C;">
+                                 Accredited Since: 03/25/2008
+                              </div>
+                              <div class="my-2" style="color: #396C9C;">
+                                 Years in Business: 25
+                              </div>
+                              <div class="my-2">
+                                 <div style="color: #396C9C;">
+                                    How We Earned an A+ Rating
+                                 </div>
+                                 <div>
+                                    In order to maintain an A+ rating, a business must meet the following qualifications:
+                                    <br><br>
+                                    <ul style="margin: 0; padding-left: 25;">
+                                       <li>  
+                                          Receive minimal complaints
+                                       </li>
+                                       <li>
+                                          Respond to complaints in an appropriate, timely manner
+                                       </li>
+                                       <li>
+                                          Maintain ethical, transparent business practices
+                                       </li>
+                                    </ul>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="d-none d-sm-block mt-5">
+                           <img src="./../images/BBB-Blue.png" height="158px" alt="">
+                        </div>
+                     </div>
+                  </div>
+                  <div class="container mx-0 px-0">
+                     <h4 class="font-weight-normal text-center" style="color: #396C9C;">Some of Our BBB Reviews</h4>
+                     <div class="d-flex flex-wrap mx-0" style="justify-content:space-around;">
+                        <div class="my-2" style="width: 200px;text-align: justify">
+                           <div class="row">
+                              <div class="col-12 my-2" >
+                                 “Excellent plan. Worth it for just teeth cleanings and check ups. I saved over $1000 for my crown and dental work over the past month.”
+                              </div>
+                              <div class="col-12 text-center">
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                              </div>
+                              <div class="col-12 text-center">
+                                 Alexandra D.
+                              </div>
+                           </div>
+                        </div>
+                        <div class="my-2" style="width: 200px;text-align: justify">
+                           <div class="row">
+                              <div class="col-12 my-2">
+                                 “This program saves you more money than having dental insurance. They are also very good to work with. You'd be a fool not to sign up!”
+                              </div>
+                              <div class="col-12 text-center">
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                              </div>
+                              <div class="col-12 text-center">
+                                 William B.
+                              </div>
+                           </div>
+                        </div>
+                        <div class="my-2" style="width: 190px;text-align: justify">
+                           <div class="row">
+                              <div class="col-12 my-2">
+                                 “Signing up for this plan led us to an excellent in-plan dentist. We save money with every visit -- no paperwork, no problems.”
+                              </div>
+                              <div class="col-12 text-center">
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                                 <span class="fa fa-star checked"></span>
+                              </div>
+                              <div class="col-12 text-center">
+                                 Lynn
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </body>
+</html>
